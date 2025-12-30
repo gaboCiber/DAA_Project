@@ -1,0 +1,162 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{algorithm, algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+
+\newtheorem{theorem}{Teorema}
+\newtheorem{definition}{Definición}
+\newtheorem{lemma}{Lema}
+\newtheorem{corollary}{Corolario}
+\newtheorem{proposition}{Proposición}
+
+\begin{document}
+	
+	\section{Definición del Problema de Decisión}
+	
+	\begin{definition}[Minimum-Cost Skill-Cover (MCSC) - Versión de Decisión]
+		\textbf{INSTANCIA:}
+		\begin{itemize}
+			\item Conjunto de freelancers $F = \{f_1, f_2, \ldots, f_m\}$
+			\item Para cada $f_i$: costo $c_i \in \mathbb{Z}^+$, habilidades con niveles $\text{nivel}_i: H \rightarrow \mathbb{N}_0$
+			\item Conjunto de habilidades requeridas $R \subseteq H$
+			\item Para cada $h_j \in R$: nivel mínimo requerido $\text{req}(h_j) \in \mathbb{N}^+$
+			\item Entero $K \geq 0$
+		\end{itemize}
+		\textbf{PREGUNTA:} ¿Existe un subconjunto $F' \subseteq F$ tal que:
+		\begin{enumerate}
+			\item Para cada $h_j \in R$, existe $f_i \in F'$ con $\text{nivel}_i(h_j) \geq \text{req}(h_j)$
+			\item $\sum_{f_i \in F'} c_i \leq K$?
+		\end{enumerate}
+	\end{definition}
+
+	\section{Set Cover es NP-Completo}
+	
+	\begin{definition}[Set Cover (SC)]
+		\textbf{INSTANCIA:} Universo $U = \{u_1, u_2, \ldots, u_n\}$, colección $S = \{S_1, S_2, \ldots, S_m\}$ donde $S_i \subseteq U$, entero $t$.
+		
+		\noindent\textbf{PREGUNTA:} ¿Existe una subcolección $C \subseteq S$ con $|C| \leq t$ que cubra $U$ (t.q. $\bigcup_{S_i \in C} S_i = U$)?
+	\end{definition}
+	
+	\noindent Hecho conocido: Set Cover es NP-completo (Karp, 1972).
+
+	\section{Reducción Polinomial: Set Cover $\leq_p$ MCSC}
+	
+	\subsection{Construcción}
+	Sea $I_{SC} = (U, S, t)$ una instancia arbitraria de Set Cover, donde:
+	\begin{itemize}
+		\item $U = \{u_1, u_2, \ldots, u_n\}$
+		\item $S = \{S_1, S_2, \ldots, S_m\}$ con $S_i \subseteq U$
+		\item $t$ es el tamaño máximo permitido
+	\end{itemize}
+	
+	Construimos una instancia $I_{MCSC} = (F, H, R, \text{nivel}, \text{req}, c, K)$ de MCSC:
+	
+	\begin{enumerate}
+		\item \textbf{Habilidades totales:} $H = U$
+		\item \textbf{Habilidades requeridas:} $R = U$ (todas son requeridas)
+		\item \textbf{Freelancers:} Para cada conjunto $S_i \in S$, creamos un freelancer $f_i$:
+		\begin{itemize}
+			\item Costo: $c_i = 1$ para todo $i \in \{1, \ldots, m\}$
+			\item Niveles de habilidad: Para cada habilidad $h_j \in H$ (correspondiente a $u_j \in U$):
+			\[
+			\text{nivel}_i(h_j) = \begin{cases} 
+				1 & \text{si } u_j \in S_i \\
+				0 & \text{si } u_j \notin S_i
+			\end{cases}
+			\]
+		\end{itemize}
+		\item \textbf{Requisitos del proyecto:} $\text{req}(h_j) = 1$ para todo $h_j \in R$
+		\item \textbf{Límite de costo:} $K = t$
+	\end{enumerate}
+	
+	La construcción es claramente polinomial: $O(m \cdot n)$.
+
+	\section{Demostración de Equivalencia}
+	
+	\begin{lemma}
+		$I_{SC}$ tiene un set cover de tamaño $\leq t$ si y solo si $I_{MCSC}$ tiene un equipo de costo $\leq K$.
+	\end{lemma}
+	
+	\begin{proof}
+		\noindent\textbf{($\Rightarrow$):} Supongamos que $I_{SC}$ tiene un set cover $C \subseteq S$ con $|C| \leq t$.
+		
+		Construimos $F' \subseteq F$ para $I_{MCSC}$:
+		\begin{itemize}
+			\item $F' = \{f_i \in F : S_i \in C\}$
+			\item Cada $f_i \in F'$ tiene costo $c_i = 1$
+			\item Costo total: $|F'| = |C| \leq t = K$
+		\end{itemize}
+		
+		\textbf{Verificación de cobertura:}
+		Sea $h_j \in R$ una habilidad cualquiera (corresponde a $u_j \in U$).
+		\begin{itemize}
+			\item Como $C$ es un set cover, existe $S_i \in C$ tal que $u_j \in S_i$.
+			\item Por construcción, el freelancer $f_i$ correspondiente tiene $\text{nivel}_i(h_j) = 1$.
+			\item $\text{req}(h_j) = 1$, por lo tanto $\text{nivel}_i(h_j) \geq \text{req}(h_j)$.
+			\item Así, $h_j$ está cubierta por $f_i \in F'$.
+		\end{itemize}
+		
+		Por lo tanto, $F'$ es un equipo válido para $I_{MCSC}$ con costo $\leq K$.
+		
+		\vspace{0.3cm}
+		
+		\noindent\textbf{($\Leftarrow$):} Supongamos que $I_{MCSC}$ tiene un equipo $F' \subseteq F$ con costo total $\leq K$.
+		
+		Construimos $C \subseteq S$ para $I_{SC}$:
+		\begin{itemize}
+			\item $C = \{S_i \in S : f_i \in F'\}$
+			\item $|C| = |F'| \leq K = t$ (pues cada $f_i$ tiene costo 1).
+		\end{itemize}
+		
+		\textbf{Verificación de cobertura:}
+		Sea $u_j \in U$ un elemento cualquiera.
+		\begin{itemize}
+			\item La habilidad correspondiente $h_j$ está en $R$.
+			\item Como $F'$ es un equipo válido, existe $f_i \in F'$ tal que $\text{nivel}_i(h_j) \geq \text{req}(h_j) = 1$.
+			\item Por construcción, $\text{nivel}_i(h_j) = 1$ implica que $u_j \in S_i$.
+			\item Por lo tanto, $u_j$ está cubierto por $S_i \in C$.
+		\end{itemize}
+		
+		Así, $C$ es un set cover para $I_{SC}$ con $|C| \leq t$.
+	\end{proof}
+
+	\section{MCSC está en NP}
+	
+	Ya lo demostramos anteriormente:
+	\begin{enumerate}
+		\item \textbf{Certificado:} Un subconjunto $F' \subseteq F$.
+		\item \textbf{Verificador polinomial:}
+		\begin{itemize}
+			\item Para cada $h_j \in R$, verificar $\exists f_i \in F'$ con $\text{nivel}_i(h_j) \geq \text{req}(h_j)$: $O(|F'| \cdot |R|)$.
+			\item Calcular $\sum_{f_i \in F'} c_i \leq K$: $O(|F'|)$.
+			\item Total: $O(m \cdot n)$.
+		\end{itemize}
+	\end{enumerate}
+
+	\section{Conclusión}
+	
+	Hemos demostrado que:
+	\begin{enumerate}
+		\item MCSC $\in$ NP (hay un verificador polinomial).
+		\item MCSC es NP-duro mediante reducción desde Set Cover (que es NP-completo).
+		\item Por lo tanto, MCSC es NP-completo.
+	\end{enumerate}
+	
+	\begin{corollary}
+		La versión de optimización (encontrar el equipo de mínimo costo) es NP-dura, pues si pudiéramos resolverla en tiempo polinomial, resolveríamos la versión de decisión en tiempo polinomial (comparando el mínimo con $K$).
+	\end{corollary}
+
+	\section{Complejidad del Algoritmo Exhaustivo}
+	
+	Dado que MCSC es NP-completo, no existe (probablemente) algoritmo polinomial exacto. El algoritmo de fuerza bruta:
+	\begin{itemize}
+		\item Considera los $2^m$ subconjuntos posibles de $F$.
+		\item Para cada subconjunto, verifica cobertura en $O(m \cdot n)$.
+		\item Complejidad total: $O(2^m \cdot m \cdot n) \rightarrow$ Exponencial en $m$.
+	\end{itemize}
+	
+\end{document}

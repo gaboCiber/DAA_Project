@@ -1,0 +1,161 @@
+\section{Implementation and Experimental Analysis}
+\label{sec:experimental-analysis}
+
+In this section, we present the implementation details and the empirical evaluation of the proposed algorithms for the Minimum-Cost Skill-Cover (MCSC) problem.
+
+\subsection{Implementation Details}
+\label{subsec:implementation-details}
+
+\begin{description}
+\item[Programming Language:] Python 3.10+
+\item[Development Environment:] Windows OS, standard Python libraries (\texttt{random}, \texttt{time}). No external dependencies were required, ensuring high portability.
+\item[Code Organization:] The project is structured as follows:
+    \begin{itemize}
+        \item \texttt{main.py}: Entry point for demonstration and basic testing.
+        \item \texttt{comp.py}: Benchmarking script for creating the experimental tables.
+        \item \texttt{algorithms/}: Package containing specific implementations (\texttt{brute\_force.py}, \texttt{greedy.py}, \texttt{local\_search.py}, \texttt{genetic.py}, \texttt{hybrid.py}, \texttt{kernelization.py}).
+        \item \texttt{models/}: Data definitions for \texttt{Freelancer} and \texttt{Proyecto}.
+        \item \texttt{utility/}: Helper modules for random instance generation.
+    \end{itemize}
+
+\item[Algorithm Parameters Configuration:] The specific parameters used for the experiments are detailed in Table \ref{tab:algorithm-parameters}.
+
+\begin{table}[H]
+\centering
+\caption{Algorithm Parameters Configuration}
+\label{tab:algorithm-parameters}
+\begin{tabular}{@{}lp{8cm}@{}}
+\toprule
+\textbf{Algorithm} & \textbf{Parameters and Values} \\
+\midrule
+Brute-Force & \textbf{Pruning:} Cost and feasibility bounds. Executed only for $m \le 20$. \\
+Greedy & \textbf{Heuristic:} Best ratio ($\frac{\text{new\_skills}}{\text{cost}}$). \\
+Local Search & \textbf{Strategy:} Hill Climbing (First Improvement). \textbf{Operators:} Redundancy elimination, 1-1 Swap. \\
+Genetic Algorithm & \textbf{Population:} 50. \textbf{Generations:} 100. \textbf{Mutation Prob:} 0.2. \textbf{Selection:} Tournament ($k=3$). \textbf{Crossover:} Uniform. \\
+Hybrid Algorithm & \textbf{Kernelization:} Dominance and essentiality rules. \textbf{Thresholds:} $m \le 20 \to$ BF, $m \le 100 \to$ Greedy+LS, $m > 100 \to$ Genetic. \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{description}
+
+\subsection{Experimental Methodology}
+\label{subsec:experimental-methodology}
+
+\subsubsection{Instance Generation}
+We developed a pseudo-random generator (\texttt{utility/test\_generator.py}) to create reproducible test cases. The generator parameters were selected to simulate realistic market conditions:
+
+\begin{table}[H]
+\centering
+\caption{Instance Generation Parameters}
+\label{tab:instance-parameters}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Range/Distribution} & \textbf{Description} \\
+\midrule
+Freelancer Cost & Uniform $[20, 100]$ & Hourly rates in abstract currency units. \\
+Skill Probability & $p=0.4$ & Probability that a freelancer possesses a specific skill. \\
+Skill Levels & Uniform $[1, 5]$ & Proficiency level of a freelancer. \\
+Requirements & Uniform $[1, 3]$ & Minimum skill level required by the project. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Performance Metrics}
+We evaluated the algorithms based on:
+\begin{itemize}
+    \item \textbf{Solution Cost:} The total cost of the selected team (lower is better).
+    \item \textbf{Execution Time:} Wall-clock time in seconds.
+    \item \textbf{Reduction Rate:} For the Hybrid approach, the percentage of freelancers removed by Kernelization.
+\end{itemize}
+
+\subsection{Experimental Results}
+\label{subsec:experimental-results}
+
+Experiments were conducted on instance sizes $m \in \{10, 20, 50, 150\}$.
+
+\subsubsection{Solution Quality Comparison}
+
+Table \ref{tab:cost-comparison} presents the costs obtained by each algorithm.
+
+\begin{table}[H]
+\centering
+\caption{Solution Cost Comparison}
+\label{tab:cost-comparison}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{m} & \textbf{Brute-Force} & \textbf{Greedy} & \textbf{Local Search} & \textbf{Genetic} & \textbf{Hybrid (Ours)} \\
+\midrule
+10 & 108.0 & 108.0 & 108.0 & 108.0 & 108.0 \\
+20 & \textbf{77.0} & 84.0 & 84.0 & \textbf{77.0} & \textbf{77.0} \\
+50 & N/A & 115.0 & 115.0 & 115.0 & \textbf{115.0} \\
+150 & N/A & 43.0 & 43.0 & \textbf{41.0} & \textbf{41.0} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis:}
+\begin{itemize}
+    \item For $m=10$, the problem is trivial and all algorithms find the optimum.
+    \item For $m=20$, the **Greedy** algorithm fails to find the optimum (Cost 84.0 vs 77.0). The **Hybrid** solver successfully finds the optimum.
+    \item For $m=150$, the **Hybrid** and **Genetic** algorithms outperform the Greedy approach (41.0 vs 43.0), demonstrating the value of advanced optimization techniques for large instances.
+\end{itemize}
+
+\subsubsection{Execution Time Analysis}
+
+Table \ref{tab:time-comparison} shows the runtime performance.
+
+\begin{table}[H]
+\centering
+\caption{Execution Time Comparison (seconds)}
+\label{tab:time-comparison}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{m} & \textbf{Brute-Force} & \textbf{Greedy} & \textbf{Local Search} & \textbf{Genetic} & \textbf{Hybrid} \\
+\midrule
+10 & 0.0002 & 0.0000 & 0.0001 & 0.0205 & 0.0001 \\
+20 & 0.0003 & 0.0000 & 0.0001 & 0.0184 & 0.0001 \\
+50 & N/A & 0.0001 & 0.0001 & 0.0210 & 0.0003 \\
+150 & N/A & 0.0001 & 0.0002 & 0.0228 & \textbf{0.0006} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis:}
+\begin{itemize}
+    \item **Greedy** is consistently the fastest but sacrifices quality.
+    \item **Genetic Algorithm** has a higher constant overhead ($\approx 0.02s$) but scales well.
+    \item **Hybrid Algorithm** is extremely efficient. For $m=150$, it takes only $0.0006s$, which is orders of magnitude faster than what a raw exact search would take, and significantly faster than the Genetic Algorithm.
+\end{itemize}
+
+\subsubsection{Effectiveness of Kernelization (Hybrid)}
+
+The success of the Hybrid algorithm is largely due to the Kernelization phase.
+
+\begin{table}[H]
+\centering
+\caption{Kernelization Effectiveness}
+\label{tab:kernel-breakdown}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Original m} & \textbf{Reduced m} & \textbf{Reduction \%} & \textbf{Solver Used} & \textbf{Result} \\
+\midrule
+10 & 5 & 50\% & Brute Force & Optimum \\
+20 & 6 & 70\% & Brute Force & Optimum \\
+50 & 11 & 78\% & Brute Force & Optimum \\
+150 & 12 & 92\% & Brute Force & Optimum \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Remarkably, for $m=150$, the domination rules reduced the candidate pool to only **12 freelancers**. This allowed the Hybrid solver to switch to **Brute Force** on the reduced set, guaranteeing an optimal solution in negligible time.
+
+\subsection{Conclusion of Experimental Analysis}
+\label{subsec:experimental-conclusion}
+
+The experimental results validate the **Hybrid Approach** as the superior strategy. By leveraging problem-specific properties (dominance) to reduce the search space, we achieved:
+\begin{enumerate}
+    \item **Optimality guarantees** even for large instances where pure exact methods fail.
+    \item **Performance** comparable to Greedy heuristics.
+    \item **Robustness** against local optima that trapped the standard Greedy algorithm.
+\end{enumerate}
+This confirms that for the MCSC problem, preprocessing is as critical as the choice of the optimization algorithm itself.

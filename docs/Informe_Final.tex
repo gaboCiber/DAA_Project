@@ -1,0 +1,883 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode} 
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{multirow}
+
+\newtheorem{theorem}{Teorema}[section]
+\newtheorem{definition}{Definición}[section]
+\newtheorem{proposition}{Proposición}[section]
+\newtheorem{lemma}{Lema}[section]
+\newtheorem{corollary}{Corolario}[section]
+\newtheorem{proof}{Demostración}
+
+% Configuración de márgenes
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% Configuración de listings para código
+\lstset{
+	language=Python,
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{blue},
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	stepnumber=1,
+	numbersep=5pt,
+	backgroundcolor=\color{white},
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	frame=single,
+	rulecolor=\color{black},
+	tabsize=4,
+	captionpos=b,
+	breaklines=true,
+	breakatwhitespace=true
+}
+
+% Título del documento
+\title{\textbf{Minimum-Cost Skill-Cover Problem} \\
+	\large Diseño y Análisis de Algoritmos \\
+	4to Año, Ciencia de la Computación}
+\author{Gabriel Andrés Pla Lasa \\ Carlos Daniel Largacha Leal}
+\date{\today}
+
+\begin{document}
+	
+	\maketitle
+	
+\begin{abstract}
+	
+	This project addresses the Minimum-Cost Skill-Cover (MCSC) problem, a combinatorial optimization challenge arising in digital freelance platforms where the objective is to select an optimal team of freelancers satisfying project skill requirements at minimum total cost. We present a complete algorithmic analysis encompassing formalization, complexity classification, algorithm design, implementation, and empirical evaluation.
+	
+	The problem is formally defined as an integer linear programming model with binary coverage constraints, capturing the essential features of real-world freelancer selection while maintaining analytical tractability. Through a polynomial-time reduction from the classical Set Cover problem, we prove MCSC is NP-complete, justifying the development of heuristic and approximate solution approaches.
+	
+	We design and implement five algorithmic strategies: (1) an exact brute-force algorithm for small instances, (2) a greedy approximation algorithm based on cost-effectiveness ratios, (3) a local search improvement heuristic, (4) a genetic algorithm employing evolutionary operators, and (5) a novel hybrid approach combining kernelization preprocessing with adaptive algorithm selection. The hybrid algorithm leverages dominance analysis to reduce problem instances by up to 92\% while preserving optimality guarantees.
+	
+	Experimental evaluation on synthetic instances ranging from 10 to 150 freelancers demonstrates that the hybrid algorithm achieves optimal or near-optimal solutions with exceptional efficiency, solving the largest instances in under 0.001 seconds. Comparative analysis reveals that while greedy algorithms offer minimal execution time, they exhibit suboptimal performance in complex scenarios, whereas genetic algorithms provide consistent quality at higher computational cost.
+	
+	The primary contribution of this work is the demonstration that domain-specific preprocessing through kernelization can transform NP-hard optimization problems into tractable instances, enabling exact solutions on substantially reduced search spaces. This research provides both theoretical insights into the complexity of skill-cover problems and practical algorithmic solutions for real-world platform implementation.
+	
+	\textbf{Keywords:} Minimum-Cost Skill-Cover, NP-completeness, combinatorial optimization, kernelization, hybrid algorithms, freelance platform optimization, set covering, genetic algorithms, approximation algorithms.
+\end{abstract}
+	
+	\tableofcontents
+	
+	\newpage
+	
+\section{Introduction}
+\label{sec:introduction}
+
+The rapid growth of the digital economy has fundamentally transformed labor markets, giving rise to expansive freelance platforms that connect specialized professionals with project-based opportunities. Within this context, platforms like TalentBridge Connect face a critical operational challenge: efficiently assembling optimal teams of freelancers to satisfy complex project requirements while minimizing costs. This team formation problem, though conceptually straightforward, reveals deep computational complexity when formalized mathematically, presenting significant algorithmic challenges that bridge theoretical computer science and practical software engineering.
+
+\subsection{Motivation}
+\label{subsec:motivation}
+
+The proliferation of remote work and distributed teams has amplified the importance of algorithmic solutions for talent matching and team assembly. Traditional manual approaches to freelancer selection become infeasible as platform scales reach thousands of professionals and hundreds of simultaneous projects. The Minimum-Cost Skill-Cover (MCSC) problem encapsulates this real-world challenge, demanding solutions that balance computational efficiency with solution quality. Beyond immediate practical applications, this problem represents an interesting theoretical case study in combinatorial optimization, combining elements of set covering, weighted selection, and constraint satisfaction with domain-specific nuances like skill proficiency levels.
+
+From an academic perspective, MCSC provides fertile ground for applying and extending techniques from algorithm design and computational complexity theory. Its structural similarity to classical NP-hard problems like Weighted Set Cover, combined with additional constraints involving skill levels, creates a rich problem space for algorithmic innovation. This project offers an opportunity to demonstrate how theoretical concepts in algorithm design translate to practical implementations addressing genuine business challenges.
+
+\subsection{Objectives}
+\label{subsec:objectives}
+
+This project aims to conduct a comprehensive analysis of the Minimum-Cost Skill-Cover problem through the complete lifecycle of algorithmic problem-solving. The specific objectives are:
+
+\begin{itemize}
+	\item \textbf{Formal Problem Definition:} To develop a precise mathematical model of the MCSC problem, transforming the informal business description into a well-defined computational problem with clear inputs, constraints, and optimization criteria.
+	
+	\item \textbf{Complexity Analysis:} To establish the computational complexity of MCSC through formal proof, demonstrating its NP-completeness via reduction from known hard problems, thereby justifying the need for heuristic and approximate solutions.
+	
+	\item \textbf{Algorithm Design:} To develop and implement multiple algorithmic strategies including exact methods for small instances, approximation algorithms with performance guarantees, and metaheuristic approaches for larger problem scales.
+	
+	\item \textbf{Empirical Evaluation:} To conduct systematic experimental analysis comparing algorithm performance across instance sizes, measuring both solution quality and computational efficiency, and identifying the most effective approaches for different problem scales.
+	
+	\item \textbf{Practical Synthesis:} To provide actionable recommendations for platform implementation based on experimental findings, balancing theoretical insights with practical considerations for real-world deployment.
+\end{itemize}
+
+\subsection{Document Organization}
+\label{subsec:organization}
+
+This report is structured to guide the reader through the complete analytical process applied to the MCSC problem. Section \ref{sec:formalization} establishes the formal mathematical model, defining the problem with precision and presenting an illustrative example. Section \ref{sec:complexity} provides the computational complexity analysis, proving NP-completeness through reduction from Set Cover. Section \ref{sec:algorithm-design} details the algorithmic approaches designed and implemented, including exact, approximate, and metaheuristic strategies. Section \ref{sec:experimental-analysis} presents the experimental methodology and results, comparing algorithm performance across varying problem scales. Section \ref{sec:discussion} interprets the findings, discusses limitations, and suggests future research directions. Finally, Section \ref{sec:conclusions} synthesizes the key insights and contributions of this investigation.
+
+The appendices provide supplementary material including implementation details, source code references, and additional experimental data. This structured approach ensures a comprehensive treatment of the MCSC problem from theoretical foundations to practical implementation and evaluation.
+	
+\section{Problem Formalization}
+\label{sec:formalization}
+
+The Minimum-Cost Skill-Cover (MCSC) problem involves the optimal selection of freelancers to satisfy project requirements at minimum cost. This section presents the complete mathematical formalization, transforming the business description into a precise computational model with well-defined components, constraints, and objectives.
+
+\subsection{Definitions and Notation}
+\label{subsec:definitions}
+
+Let a system consist of a set of available freelancers and a specific project with skill requirements. We define the following sets and functions:
+
+The set of freelancers is denoted by $F = \{f_1, f_2, \ldots, f_m\}$, where $m$ represents the total number of freelancers on the platform. Each freelancer $f_i \in F$ has an associated cost $c_i \in \mathbb{R}^+$, corresponding to their hourly rate.
+
+The universe of possible skills in the system is represented by $H = \{h_1, h_2, \ldots, h_p\}$, where $p$ indicates the total number of skills that may be considered. For each freelancer $f_i$, we define a skill level function $\text{level}_i: H \rightarrow \mathbb{N}_0$ that assigns to each skill $h_j \in H$ a numerical value representing proficiency. The value $\text{level}_i(h_j) = 0$ indicates the freelancer does not possess skill $h_j$, while positive values represent varying competency levels.
+
+The specific project defines a subset of required skills $R \subseteq H$. For each required skill $h_j \in R$, a minimum required level $\text{req}(h_j) \in \mathbb{N}^+$ is established, representing the minimum acceptable competency for that skill within the project context.
+
+\subsection{Mathematical Model}
+\label{subsec:model}
+
+The solution to the problem consists of selecting a subset of freelancers $F' \subseteq F$ that satisfies all project requirements at minimum total cost. To formalize this notion, we introduce a binary decision variable $x_i$ for each freelancer $f_i \in F$, defined as:
+
+\[
+x_i = 
+\begin{cases} 
+	1 & \text{if freelancer } f_i \text{ is selected} \\
+	0 & \text{otherwise}
+\end{cases}
+\]
+
+The fundamental skill coverage condition establishes that for each required skill $h_j \in R$, there must exist at least one selected freelancer possessing that skill at a level equal to or exceeding the minimum requirement. Formally, this constraint is expressed as:
+
+\[
+\forall h_j \in R: \quad \max_{i \in \{1,\ldots,m\}} \left\{ x_i \cdot \mathbb{I}_{[\text{level}_i(h_j) \geq \text{req}(h_j)]} \right\} = 1
+\]
+
+where $\mathbb{I}_{[condition]}$ represents the indicator function taking value 1 if the condition is true and 0 otherwise.
+
+An equivalent formulation, more convenient for algorithmic analysis, can be obtained by defining a binary coverage matrix $A = [a_{ij}]_{m \times |R|}$ where:
+
+\[
+a_{ij} = 
+\begin{cases} 
+	1 & \text{if } \text{level}_i(h_j) \geq \text{req}(h_j) \\
+	0 & \text{otherwise}
+\end{cases}
+\]
+
+With this notation, the coverage constraints are expressed as:
+
+\[
+\forall j \in \{1,\ldots,|R|\}: \quad \sum_{i=1}^{m} a_{ij} x_i \geq 1
+\]
+
+The objective of the problem is to minimize the total cost of the selected team, leading to the following objective function:
+
+\[
+\text{Minimize} \quad Z = \sum_{i=1}^{m} c_i x_i
+\]
+
+The complete formulation of the problem as an integer linear program (ILP) is:
+
+\[
+\begin{aligned}
+	& \underset{x_1,\ldots,x_m}{\text{minimize}} & & \sum_{i=1}^{m} c_i x_i \\
+	& \text{subject to} & & \sum_{i=1}^{m} a_{ij} x_i \geq 1, \quad \forall j \in \{1,\ldots,|R|\} \\
+	& & & x_i \in \{0, 1\}, \quad \forall i \in \{1,\ldots,m\}
+\end{aligned}
+\]
+
+\subsection{Illustrative Example}
+\label{subsec:example}
+
+Consider a scenario with three available freelancers $F = \{f_1, f_2, f_3\}$ and a project requiring three skills $R = \{\text{Frontend}, \text{Database}, \text{UX/UI}\}$. The freelancers' characteristics and project requirements are detailed below.
+
+The freelancers exhibit the following costs and skill profiles:
+\begin{itemize}
+	\item $f_1$: Cost 50, skills $\{\text{Frontend:4}, \text{Database:2}\}$
+	\item $f_2$: Cost 40, skills $\{\text{Database:4}, \text{UX/UI:3}\}$
+	\item $f_3$: Cost 60, skills $\{\text{Frontend:5}, \text{UX/UI:5}\}$
+\end{itemize}
+
+The project establishes the following minimum requirements: Frontend $\geq$ 4, Database $\geq$ 3, and UX/UI $\geq$ 4.
+
+The resulting coverage matrix $A$ is:
+
+\[
+A = \begin{bmatrix}
+	1 & 0 & 0 \\  % f1: covers Frontend (4≥4), doesn't cover DB (2<3), doesn't cover UX/UI
+	0 & 1 & 0 \\  % f2: doesn't cover Frontend, covers DB (4≥3), doesn't cover UX/UI (3<4)
+	1 & 0 & 1     % f3: covers Frontend (5≥4), doesn't cover DB, covers UX/UI (5≥4)
+\end{bmatrix}
+\]
+
+Possible solutions and their costs are:
+\begin{itemize}
+	\item $\{f_1, f_2, f_3\}$: Cost 150 - Covers all skills
+	\item $\{f_2, f_3\}$: Cost 100 - Covers all skills ($f_2$ covers DB, $f_3$ covers Frontend and UX/UI)
+	\item $\{f_1, f_3\}$: Cost 110 - Does not cover DB ($f_1$ has level 2 < 3)
+	\item $\{f_1, f_2\}$: Cost 90 - Does not cover UX/UI ($f_2$ has level 3 < 4)
+\end{itemize}
+
+The optimal solution is $\{f_2, f_3\}$ with total cost 100, satisfying all project requirements at minimum possible cost.
+
+This formalization completely captures the essence of the problem described in the TalentBridge Connect context, providing a solid foundation for the complexity analysis and algorithm design presented in subsequent sections. The model enables representation of arbitrary problem instances and establishes the framework for evaluating different algorithmic approaches.
+
+\section{Computational Complexity Analysis}
+\label{sec:complexity}
+
+This section demonstrates that the Minimum-Cost Skill-Cover Problem (MCSC) belongs to the class of NP-complete problems. We formally present the decision version of the problem, prove its membership in NP, and provide a polynomial-time reduction from the classical Set Cover problem, thereby establishing its NP-completeness.
+
+\subsection{Membership in NP}
+\label{subsec:membership-np}
+
+\begin{definition}[Minimum-Cost Skill-Cover - Decision Version]
+	Let an instance of MCSC be defined by:
+	\begin{itemize}
+		\item A set of freelancers $F = \{f_1, f_2, \ldots, f_m\}$
+		\item For each $f_i \in F$: a cost $c_i \in \mathbb{Z}^+$ and a skill level function $\text{level}_i: H \rightarrow \mathbb{N}_0$
+		\item A set of required skills $R \subseteq H$
+		\item For each $h_j \in R$: a minimum required level $\text{req}(h_j) \in \mathbb{N}^+$
+		\item An integer $K \geq 0$
+	\end{itemize}
+	The decision question is: Does there exist a subset $F' \subseteq F$ such that:
+	\begin{enumerate}
+		\item For each skill $h_j \in R$, there exists at least one freelancer $f_i \in F'$ with $\text{level}_i(h_j) \geq \text{req}(h_j)$
+		\item The sum of costs $\sum_{f_i \in F'} c_i \leq K$?
+	\end{enumerate}
+\end{definition}
+
+\begin{proposition}
+	The decision version of MCSC belongs to the class NP.
+\end{proposition}
+
+\begin{proof}
+	To demonstrate that MCSC $\in$ NP, we must exhibit a polynomial-time verifier. Given a certificate consisting of a subset $F' \subseteq F$, the verifier performs the following checks:
+	
+	\begin{enumerate}
+		\item For each skill $h_j \in R$, verify that there exists some $f_i \in F'$ with $\text{level}_i(h_j) \geq \text{req}(h_j)$. This verification requires time $O(|F'| \cdot |R|)$.
+		\item Calculate the total cost $\sum_{f_i \in F'} c_i$ and compare with $K$, which requires time $O(|F'|)$.
+	\end{enumerate}
+	
+	The total verification time is $O(|F'| \cdot |R|)$, bounded by $O(m \cdot n)$ where $m = |F|$ and $n = |R|$. Therefore, a polynomial-time verifier exists, and MCSC $\in$ NP.
+\end{proof}
+
+\subsection{Reduction from Set Cover}
+\label{subsec:reduction-setcover}
+
+\begin{definition}[Set Cover (SC)]
+	Given a universe $U = \{u_1, u_2, \ldots, u_n\}$, a collection $S = \{S_1, S_2, \ldots, S_m\}$ of subsets of $U$, and an integer $t$, the Set Cover problem consists of determining whether there exists a subcollection $C \subseteq S$ with $|C| \leq t$ such that $\bigcup_{S_i \in C} S_i = U$.
+\end{definition}
+
+Set Cover is a classical NP-complete problem, established by Karp in 1972.
+
+\begin{theorem}
+	There exists a polynomial-time reduction from Set Cover to Minimum-Cost Skill-Cover.
+\end{theorem}
+
+\begin{proof}
+	Let $I_{SC} = (U, S, t)$ be an arbitrary instance of Set Cover, where $U = \{u_1, u_2, \ldots, u_n\}$, $S = \{S_1, S_2, \ldots, S_m\}$ with $S_i \subseteq U$, and $t \in \mathbb{Z}^+$.
+	
+	We construct an instance $I_{MCSC} = (F, H, R, \text{level}, \text{req}, c, K)$ of MCSC as follows:
+	
+	\begin{enumerate}
+		\item Define the set of skills $H = U$.
+		\item Establish that all skills are required: $R = H = U$.
+		\item For each set $S_i \in S$, create a freelancer $f_i \in F$ with:
+		\begin{itemize}
+			\item Cost $c_i = 1$
+			\item Skill level function $\text{level}_i: H \rightarrow \{0, 1\}$ defined as:
+			\[
+			\text{level}_i(h_j) = 
+			\begin{cases} 
+				1 & \text{if } u_j \in S_i \\
+				0 & \text{if } u_j \notin S_i
+			\end{cases}
+			\]
+			where $h_j \in H$ corresponds to element $u_j \in U$.
+		\end{itemize}
+		\item For each skill $h_j \in R$, set $\text{req}(h_j) = 1$.
+		\item Define $K = t$.
+	\end{enumerate}
+	
+	The construction of $I_{MCSC}$ requires time $O(m \cdot n)$, which is polynomial in the size of $I_{SC}$.
+\end{proof}
+
+\subsection{Proof of NP-Completeness}
+\label{subsec:np-completeness-proof}
+
+\begin{lemma}
+	The instance $I_{SC}$ of Set Cover has a solution with size $\leq t$ if and only if the instance $I_{MCSC}$ of MCSC has a solution with cost $\leq K$.
+\end{lemma}
+
+\begin{proof}
+	We prove both directions of the equivalence.
+	
+	\textbf{($\Rightarrow$) Forward direction:} Suppose $C \subseteq S$ is a set cover for $I_{SC}$ with $|C| \leq t$. Construct $F' = \{f_i \in F : S_i \in C\}$. Each $f_i \in F'$ has cost $c_i = 1$, so the total cost is $|F'| = |C| \leq t = K$.
+	
+	To verify that $F'$ is a valid team, let $h_j \in R$ be any skill. Since $C$ is a set cover, there exists $S_i \in C$ such that $u_j \in S_i$. By construction, the corresponding freelancer $f_i$ has $\text{level}_i(h_j) = 1$. Given that $\text{req}(h_j) = 1$, we have $\text{level}_i(h_j) \geq \text{req}(h_j)$. Therefore, $h_j$ is covered by $f_i \in F'$, and $F'$ is a solution for $I_{MCSC}$.
+	
+	\textbf{($\Leftarrow$) Reverse direction:} Suppose $F' \subseteq F$ is a team for $I_{MCSC}$ with total cost $\leq K$. Construct $C = \{S_i \in S : f_i \in F'\}$. Since each $f_i$ has cost 1, $|C| = |F'| \leq K = t$.
+	
+	To verify that $C$ is a set cover, let $u_j \in U$ be any element. The corresponding skill $h_j$ is in $R$. Since $F'$ is a valid team, there exists $f_i \in F'$ such that $\text{level}_i(h_j) \geq \text{req}(h_j) = 1$. By construction, $\text{level}_i(h_j) = 1$ implies $u_j \in S_i$, and therefore $S_i \in C$ covers $u_j$. Thus, $C$ is a set cover for $I_{SC}$.
+\end{proof}
+
+\begin{theorem}
+	Minimum-Cost Skill-Cover is NP-complete.
+\end{theorem}
+
+\begin{proof}
+	The proof follows directly from the established results:
+	
+	\begin{enumerate}
+		\item By Proposition 1, MCSC $\in$ NP.
+		\item By Theorem 1 and Lemma 1, MCSC is NP-hard, since Set Cover (NP-complete) reduces polynomially to MCSC.
+		\item Therefore, MCSC is NP-complete.
+	\end{enumerate}
+\end{proof}
+
+\subsection{Complexity Implications}
+\label{subsec:complexity-implications}
+
+\begin{corollary}
+	The optimization version of MCSC (finding the minimum-cost team) is NP-hard.
+\end{corollary}
+
+\begin{proof}
+	If a polynomial-time algorithm existed for the optimization version, the decision version could be solved in polynomial time by comparing the minimum cost obtained with the threshold $K$.
+\end{proof}
+
+\begin{proposition}[Complexity of Exhaustive Algorithm]
+	The brute-force algorithm for MCSC, which evaluates all possible subsets of freelancers, has time complexity $O(2^m \cdot m \cdot n)$, where $m = |F|$ and $n = |R|$.
+\end{proposition}
+
+\begin{proof}
+	The search space consists of all $2^m$ possible subsets of $F$. For each candidate subset $F' \subseteq F$, the algorithm must:
+	\begin{enumerate}
+		\item Verify that for each $h_j \in R$ there exists $f_i \in F'$ with $\text{level}_i(h_j) \geq \text{req}(h_j)$, requiring time $O(|F'| \cdot |R|) \leq O(m \cdot n)$.
+		\item Calculate the total cost $\sum_{f_i \in F'} c_i$, requiring time $O(|F'|) \leq O(m)$.
+	\end{enumerate}
+	The total complexity is therefore $O(2^m \cdot m \cdot n)$, an exponential function in $m$.
+\end{proof}
+
+The NP-completeness of MCSC has important practical consequences. First, it justifies the use of non-exact algorithms for substantial instances, as no polynomial-time exact algorithm is expected to exist (unless P = NP). Second, it provides theoretical foundation for the algorithmic approaches presented in the following section, which include approximation algorithms and metaheuristics designed to deliver high-quality solutions within practical time constraints.
+	
+\section{Algorithm Design}
+\label{sec:algorithm-design}
+
+Given the NP-hardness of the Minimum-Cost Skill-Cover Problem established in the previous section, this section presents a comprehensive algorithmic framework addressing both exact and approximate solution strategies. We design two categories of algorithms: an exact brute-force algorithm for small instances serving as a baseline, and several approximate algorithms for practical large-scale instances.
+
+\subsection{Exact Algorithm: Brute-Force with Backtracking}
+\label{subsec:exact-algorithm}
+
+The exact algorithm employs a systematic exploration of all possible freelancer subsets. The fundamental approach consists of evaluating each subset of $F$, verifying coverage of all required skills, and selecting the minimum-cost valid team.
+
+\subsubsection{Algorithm 1: Exhaustive Enumeration}
+\begin{algorithm}[H]
+	\caption{Exact Brute-Force Algorithm for MCSC}
+	\label{alg:exact-brute-force}
+	\begin{algorithmic}[1]
+		\Require Set of freelancers $F = \{f_1, \ldots, f_m\}$ with costs $c_i$ and skill levels $\text{level}_i(h_j)$; Project requirements $R \subseteq H$ with minimum levels $\text{req}(h_j)$
+		\Ensure Optimal team $F^* \subseteq F$ and its cost $C^*$
+		\State $\text{best\_cost} \gets \infty$
+		\State $\text{best\_team} \gets \emptyset$
+		\For{$b = 0$ \textbf{to} $2^m - 1$}
+		\State $\text{current\_team} \gets \{f_i \in F \mid \text{bit } i \text{ of } b = 1\}$
+		\State $\text{current\_cost} \gets \sum_{f_i \in \text{current\_team}} c_i$
+		\If{$\text{current\_cost} \geq \text{best\_cost}$}
+		\State \textbf{continue} \Comment{Cost-based pruning}
+		\EndIf
+		\If{$\text{covers\_all\_requirements}(\text{current\_team}, R)$}
+		\State $\text{best\_cost} \gets \text{current\_cost}$
+		\State $\text{best\_team} \gets \text{current\_team}$
+		\EndIf
+		\EndFor
+		\State \Return $\text{best\_team}, \text{best\_cost}$
+	\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Coverage Verification Function}
+The auxiliary function $\text{covers\_all\_requirements}(F', R)$ determines whether a candidate team $F'$ satisfies all project requirements. In mathematical terms:
+
+\[
+\text{covers\_all\_requirements}(F', R) = 
+\begin{cases}
+	\text{true} & \text{if } \forall h_j \in R, \exists f_i \in F': \text{level}_i(h_j) \geq \text{req}(h_j) \\
+	\text{false} & \text{otherwise}
+\end{cases}
+\]
+
+Note that the indicator function $\mathbb{I}_{[\text{condition}]}$ takes the value 1 if the condition is true and 0 otherwise.
+
+\subsubsection{Complexity Analysis}
+The exhaustive enumeration algorithm has time complexity $O(2^m \cdot m \cdot n)$, where $m = |F|$ is the number of freelancers and $n = |R|$ is the number of required skills. The space complexity is $O(m + n)$ for storing the current team and tracking coverage.
+
+\subsubsection{Backtracking Optimization}
+A more efficient implementation uses backtracking with pruning strategies:
+
+\begin{algorithm}[H]
+	\caption{Backtracking with Pruning}
+	\label{alg:backtracking}
+	\begin{algorithmic}[1]
+		\Function{Backtrack}{$F$, $idx$, $\text{current\_team}$, $\text{current\_cost}$, $\text{covered\_skills}$}
+		\If{$\text{covered\_skills} = R$}
+		\State Update best solution if $\text{current\_cost}$ is better
+		\State \Return
+		\EndIf
+		\If{$idx = |F|$}
+		\State \Return
+		\EndIf
+		\State \Comment{Option 1: Skip current freelancer}
+		\State \Call{Backtrack}{$F$, $idx+1$, $\text{current\_team}$, $\text{current\_cost}$, $\text{covered\_skills}$}
+		\State \Comment{Option 2: Include freelancer if beneficial}
+		\State $\text{new\_skills} \gets \{h \in R \setminus \text{covered\_skills} \mid F[idx].\text{level}(h) \geq \text{req}(h)\}$
+		\If{$\text{new\_skills} \neq \emptyset$}
+		\State \Call{Backtrack}{$F$, $idx+1$, $\text{current\_team} \cup \{F[idx]\}$, 
+			$\text{current\_cost} + F[idx].\text{cost}$, 
+			$\text{covered\_skills} \cup \text{new\_skills}$}
+		\EndIf
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\subsection{Approximation Algorithms}
+\label{subsec:approximation-algorithms}
+
+\subsubsection{Greedy Approximation Algorithm}
+The greedy algorithm iteratively selects freelancers based on a cost-effectiveness ratio, prioritizing those covering many uncovered skills at low cost.
+
+\begin{algorithm}[H]
+	\caption{Greedy Approximation Algorithm}
+	\label{alg:greedy}
+	\begin{algorithmic}[1]
+		\Require $F$, $R$ as defined previously
+		\Ensure Approximate team $\tilde{F} \subseteq F$
+		\State $\text{team} \gets \emptyset$
+		\State $\text{covered\_skills} \gets \emptyset$
+		\State $\text{available\_freelancers} \gets F$
+		\While{$\text{covered\_skills} \neq R$}
+		\State $\text{best\_ratio} \gets -\infty$
+		\State $\text{best\_freelancer} \gets \text{None}$
+		\For{\textbf{each} $f \in \text{available\_freelancers}$}
+		\State $\text{new\_skills} \gets \{h \in R \setminus \text{covered\_skills} \mid f.\text{level}(h) \geq \text{req}(h)\}$
+		\If{$|\text{new\_skills}| > 0$}
+		\State $\text{ratio} \gets |\text{new\_skills}| / f.\text{cost}$
+		\If{$\text{ratio} > \text{best\_ratio}$}
+		\State $\text{best\_ratio} \gets \text{ratio}$
+		\State $\text{best\_freelancer} \gets f$
+		\EndIf
+		\EndIf
+		\EndFor
+		\If{$\text{best\_freelancer} = \text{None}$}
+		\State \Return ``No feasible solution exists''
+		\EndIf
+		\State $\text{team} \gets \text{team} \cup \{\text{best\_freelancer}\}$
+		\State $\text{covered\_skills} \gets \text{covered\_skills} \cup \{h \in R \mid \text{best\_freelancer}.\text{level}(h) \geq \text{req}(h)\}$
+		\State $\text{available\_freelancers} \gets \text{available\_freelancers} \setminus \{\text{best\_freelancer}\}$
+		\EndWhile
+		\State \Return $\text{team}$
+	\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Approximation Guarantee}
+For the classical Weighted Set Cover problem, the greedy algorithm achieves an approximation ratio of $H(\max_i |S_i|) \leq 1 + \ln n$, where $H(k)$ is the $k$-th harmonic number and $n = |U|$. Although MCSC incorporates skill levels, the greedy heuristic maintains comparable performance guarantees in practice.
+
+\subsubsection{Variant: Effective Cost Greedy}
+An alternative approach selects the freelancer with minimum effective cost:
+\[
+\text{effective\_cost}(f) = \frac{f.\text{cost}}{|\{h \in R \setminus \text{covered\_skills} \mid f.\text{level}(h) \geq \text{req}(h)\}|}
+\]
+This variant prioritizes freelancers providing maximum coverage per unit cost.
+
+\subsection{Heuristic and Metaheuristic Approaches}
+\label{subsec:heuristics}
+
+\subsubsection{Local Search Algorithm}
+Local search begins with an initial solution (typically from the greedy algorithm) and iteratively improves it through neighborhood exploration.
+
+\begin{algorithm}[H]
+	\caption{Local Search Improvement}
+	\label{alg:local-search}
+	\begin{algorithmic}[1]
+		\Require Initial solution $\text{initial\_solution}$, $F$, $R$
+		\Ensure Improved solution
+		\State $\text{current\_solution} \gets \text{initial\_solution}$
+		\State $\text{improved} \gets \text{true}$
+		\While{$\text{improved}$}
+		\State $\text{improved} \gets \text{false}$
+		
+		\For{\textbf{each} pair $(f_1, f_2) \in \text{current\_solution}$}
+		\For{\textbf{each} $f_3 \in F \setminus \text{current\_solution}$}
+		\If{$f_3$ covers all skills covered by $\{f_1, f_2\}$}
+		\If{$f_3.\text{cost} < f_1.\text{cost} + f_2.\text{cost}$}
+		\State $\text{current\_solution} \gets (\text{current\_solution} \setminus \{f_1, f_2\}) \cup \{f_3\}$
+		\State $\text{improved} \gets \text{true}$
+		\State \textbf{break}
+		\EndIf
+		\EndIf
+		\EndFor
+		\If{$\text{improved}$} \State \textbf{break} \EndIf
+		\EndFor
+		
+		\For{\textbf{each} $f \in \text{current\_solution}$}
+		\If{$\text{current\_solution} \setminus \{f\}$ covers $R$}
+		\State $\text{current\_solution} \gets \text{current\_solution} \setminus \{f\}$
+		\State $\text{improved} \gets \text{true}$
+		\State \textbf{break}
+		\EndIf
+		\EndFor
+		\EndWhile
+		\State \Return $\text{current\_solution}$
+	\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Genetic Algorithm}
+The genetic algorithm employs evolutionary principles to explore the solution space through selection, crossover, and mutation operations.
+
+\begin{algorithm}[H]
+	\caption{Genetic Algorithm for MCSC}
+	\label{alg:genetic}
+	\begin{algorithmic}[1]
+		\Require Population size $P$, maximum generations $G$, mutation rate $\mu$
+		\Ensure Best solution found
+		\State Initialize population with $P$ random solutions (or greedy solutions)
+		\State Evaluate fitness: $\text{fitness}(sol) = \frac{1}{\text{cost}(sol) + \lambda \cdot \text{penalty}(sol)}$
+		\For{$generation = 1$ \textbf{to} $G$}
+		\State Select parents using tournament selection
+		\State Apply crossover: union of parent teams followed by reduction
+		\State Apply mutation: with probability $\mu$, add or remove random freelancer
+		\State Repair infeasible solutions using greedy completion
+		\State Replace population maintaining elitism
+		\EndFor
+		\State \Return Best solution in final population
+	\end{algorithmic}
+\end{algorithm}
+
+\subsection{Kernelization Techniques}
+\label{subsec:kernelization}
+
+Kernelization reduces problem instances by applying sound reduction rules that preserve optimal solutions.
+
+\begin{algorithm}[H]
+	\caption{Preprocessing via Kernelization}
+	\label{alg:kernelization}
+	\begin{algorithmic}[1]
+		\Function{Preprocess}{$F$, $R$}
+		\State $\text{mandatory} \gets \emptyset$
+		\For{\textbf{each} $h \in R$}
+		\State $\text{candidates} \gets \{f \in F \mid f.\text{level}(h) \geq \text{req}(h)\}$
+		\If{$|\text{candidates}| = 1$}
+		\State $\text{mandatory} \gets \text{mandatory} \cup \text{candidates}$
+		\EndIf
+		\EndFor
+		
+		\State $R' \gets R \setminus \{h \in R \mid h \text{ covered by } \text{mandatory}\}$
+		\State $F' \gets F \setminus \text{mandatory}$
+		
+		\For{\textbf{each} $f_1 \in F'$}
+		\For{\textbf{each} $f_2 \in F' \setminus \{f_1\}$}
+		\If{$f_1$ dominates $f_2$} \Comment{$f_1.\text{cost} \leq f_2.\text{cost}$ and $f_1$ covers superset of $f_2$'s skills}
+		\State $F' \gets F' \setminus \{f_2\}$
+		\EndIf
+		\EndFor
+		\EndFor
+		
+		\State \Return $F'$, $R'$, $\text{mandatory}$
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\subsection{Hybrid Algorithm}
+\label{subsec:hybrid-algorithm}
+
+Based on empirical observations, we propose a hybrid strategy that adapts to instance characteristics:
+
+\begin{algorithm}[H]
+	\caption{Adaptive Hybrid Algorithm}
+	\label{alg:hybrid}
+	\begin{algorithmic}[1]
+		\Require $F$, $R$
+		\Ensure High-quality team
+		\State $F', R', \text{mandatory} \gets \Call{Preprocess}{F, R}$
+		\State $\text{solution} \gets \text{mandatory}$
+		\If{$|F'| \leq 20$}
+		\State Apply exact backtracking on $F'$
+		\ElsIf{$20 < |F'| \leq 100$}
+		\State $\text{greedy\_sol} \gets \Call{Greedy}{F', R'}$
+		\State $\text{solution} \gets \text{solution} \cup \Call{LocalSearch}{\text{greedy\_sol}, F', R'}$
+		\Else
+		\State $\text{solution} \gets \text{solution} \cup \Call{GeneticAlgorithm}{F', R'}$
+		\EndIf
+		\State \Return $\text{solution}$
+	\end{algorithmic}
+\end{algorithm}
+
+\subsection{Theoretical Analysis Summary}
+\label{subsec:theoretical-analysis}
+
+Table \ref{tab:algorithm-comparison} summarizes the theoretical properties of the proposed algorithms.
+
+\begin{table}[ht]
+	\centering
+	\caption{Theoretical Comparison of Proposed Algorithms}
+	\label{tab:algorithm-comparison}
+	\begin{tabular}{@{}lccc@{}}
+		\toprule
+		\textbf{Algorithm} & \textbf{Time Complexity} & \textbf{Solution Quality} & \textbf{Application Scope} \\
+		\midrule
+		Exact Brute-Force & $O(2^m \cdot m \cdot n)$ & Optimal & Small instances ($m \leq 20$) \\
+		Greedy Approximation & $O(m^2 \cdot n)$ & $O(\log n)$-approximation & Fast decent solutions \\
+		Local Search & $O(k \cdot m^2 \cdot n)$ & Improves initial solution & Post-processing refinement \\
+		Genetic Algorithm & $O(P \cdot G \cdot m \cdot n)$ & High-quality exploration & Large-scale instances \\
+		Hybrid Adaptive & Variable & Balanced trade-off & General-purpose deployment \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+The algorithm design presented in this section provides a comprehensive toolkit for addressing MCSC instances of varying sizes and characteristics. The exact algorithm serves as a baseline for validation, while the approximate algorithms offer practical solutions for real-world applications where optimality must be traded for computational efficiency.
+	
+\section{Implementation and Experimental Analysis}
+\label{sec:experimental-analysis}
+
+This section presents the empirical evaluation of the proposed algorithms for the Minimum-Cost Skill-Cover (MCSC) problem, detailing implementation specifics, experimental methodology, and comprehensive performance analysis.
+
+\subsection{Implementation Details}
+\label{subsec:implementation-details}
+
+The algorithmic framework was implemented in Python 3.10+ utilizing standard libraries, ensuring high portability without external dependencies. The codebase follows a modular architecture comprising several key components. The \texttt{main.py} module serves as the primary entry point for demonstrations, while \texttt{comp.py} handles systematic benchmarking and table generation. Algorithm implementations reside within the \texttt{algorithms/} directory, containing specialized modules for brute-force search, greedy approximation, local search, genetic algorithms, and the hybrid approach. Data abstractions for freelancers and projects are defined in the \texttt{models/} package, and the \texttt{utility/} module provides pseudo-random instance generation capabilities.
+
+Table \ref{tab:algorithm-parameters} details the specific parameter configurations employed for each algorithm during experimentation. The brute-force implementation incorporates cost and feasibility pruning strategies, executing exclusively for instances with $m \leq 20$ freelancers. The greedy algorithm employs a cost-effectiveness heuristic based on the ratio of newly covered skills to freelancer cost. Local search operates through a hill-climbing strategy with first-improvement acceptance, utilizing redundancy elimination and one-to-one swap operators. The genetic algorithm maintains a population of 50 individuals across 100 generations, applying uniform crossover with 0.2 mutation probability and tournament selection ($k=3$). The hybrid approach integrates kernelization techniques with adaptive algorithm selection based on instance size thresholds.
+
+\begin{table}[H]
+	\centering
+	\caption{Algorithm Parameters Configuration}
+	\label{tab:algorithm-parameters}
+	\begin{tabular}{@{}lp{8cm}@{}}
+		\toprule
+		\textbf{Algorithm} & \textbf{Parameters and Values} \\
+		\midrule
+		Brute-Force & Pruning: Cost and feasibility bounds. Execution limited to $m \leq 20$. \\
+		Greedy & Heuristic: Maximum ratio of new skills to cost. \\
+		Local Search & Strategy: Hill Climbing (First Improvement). Operators: Redundancy elimination, 1-1 swap. \\
+		Genetic Algorithm & Population: 50. Generations: 100. Mutation probability: 0.2. Selection: Tournament ($k=3$). Crossover: Uniform. \\
+		Hybrid Algorithm & Kernelization: Dominance and essentiality rules. Thresholds: $m \leq 20$ (brute force), $20 < m \leq 100$ (greedy + local search), $m > 100$ (genetic). \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Experimental Methodology}
+\label{subsec:experimental-methodology}
+
+\subsubsection{Instance Generation}
+
+A pseudo-random instance generator was developed to create reproducible test cases simulating realistic market conditions. The generator parameters, detailed in Table \ref{tab:instance-parameters}, were calibrated to produce diverse problem instances. Freelancer costs follow a uniform distribution between 20 and 100 abstract currency units, representing varied hourly rates. Each freelancer possesses any given skill with probability $p=0.4$, with skill proficiency levels uniformly distributed between 1 and 5. Project requirements specify minimum skill levels drawn uniformly from the range 1 to 3.
+
+\begin{table}[H]
+	\centering
+	\caption{Instance Generation Parameters}
+	\label{tab:instance-parameters}
+	\begin{tabular}{@{}lll@{}}
+		\toprule
+		\textbf{Parameter} & \textbf{Range/Distribution} & \textbf{Description} \\
+		\midrule
+		Freelancer Cost & Uniform $[20, 100]$ & Hourly rates in abstract units \\
+		Skill Probability & $p=0.4$ & Probability freelancer possesses skill \\
+		Skill Levels & Uniform $[1, 5]$ & Proficiency level of freelancer \\
+		Requirements & Uniform $[1, 3]$ & Minimum required skill level \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsubsection{Performance Metrics}
+
+Algorithm performance was evaluated using three principal metrics. Solution cost measures the total expenditure of the selected team, with lower values indicating superior performance. Execution time captures wall-clock computational requirements in seconds. For the hybrid approach, the reduction rate quantifies the percentage of freelancers eliminated during kernelization preprocessing.
+
+\subsection{Experimental Results}
+\label{subsec:experimental-results}
+
+Experiments were conducted across four instance scales: $m \in \{10, 20, 50, 150\}$ freelancers. Each configuration was evaluated using all applicable algorithms, with results averaged over multiple runs to ensure statistical reliability.
+
+\subsubsection{Solution Quality Comparison}
+
+Table \ref{tab:cost-comparison} presents the comparative solution costs obtained by each algorithm. For the smallest instance ($m=10$), all algorithms successfully identify the optimal solution at cost 108.0, indicating the tractability of trivial problem sizes. At $m=20$, a notable performance divergence emerges: while brute-force establishes the optimal cost at 77.0, the greedy algorithm and local search produce suboptimal solutions at 84.0, representing a 9.1\% optimality gap. Both genetic and hybrid algorithms match the brute-force optimum at this scale. For larger instances ($m=50, 150$) where brute-force becomes computationally prohibitive, the genetic and hybrid algorithms demonstrate superior performance, achieving cost 41.0 at $m=150$ compared to 43.0 from greedy and local search approaches.
+
+\begin{table}[H]
+	\centering
+	\caption{Solution Cost Comparison}
+	\label{tab:cost-comparison}
+	\begin{tabular}{@{}lccccc@{}}
+		\toprule
+		\textbf{m} & \textbf{Brute-Force} & \textbf{Greedy} & \textbf{Local Search} & \textbf{Genetic} & \textbf{Hybrid} \\
+		\midrule
+		10 & 108.0 & 108.0 & 108.0 & 108.0 & 108.0 \\
+		20 & \textbf{77.0} & 84.0 & 84.0 & \textbf{77.0} & \textbf{77.0} \\
+		50 & N/A & 115.0 & 115.0 & 115.0 & \textbf{115.0} \\
+		150 & N/A & 43.0 & 43.0 & \textbf{41.0} & \textbf{41.0} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsubsection{Execution Time Analysis}
+
+Computational efficiency results appear in Table \ref{tab:time-comparison}. The greedy algorithm exhibits consistently minimal execution times across all instance sizes, typically below 0.0001 seconds. Local search maintains similar efficiency, requiring only marginally more computation. The genetic algorithm demonstrates higher constant overhead, approximately 0.02 seconds per instance, though this cost remains stable regardless of problem scale. Most notably, the hybrid approach achieves exceptional efficiency, solving the largest instance ($m=150$) in merely 0.0006 seconds while maintaining solution quality. This represents a 38-fold speed advantage over the genetic algorithm at equivalent quality levels.
+
+\begin{table}[H]
+	\centering
+	\caption{Execution Time Comparison (seconds)}
+	\label{tab:time-comparison}
+	\begin{tabular}{@{}lccccc@{}}
+		\toprule
+		\textbf{m} & \textbf{Brute-Force} & \textbf{Greedy} & \textbf{Local Search} & \textbf{Genetic} & \textbf{Hybrid} \\
+		\midrule
+		10 & 0.0002 & 0.0000 & 0.0001 & 0.0205 & 0.0001 \\
+		20 & 0.0003 & 0.0000 & 0.0001 & 0.0184 & 0.0001 \\
+		50 & N/A & 0.0001 & 0.0001 & 0.0210 & 0.0003 \\
+		150 & N/A & 0.0001 & 0.0002 & 0.0228 & \textbf{0.0006} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsubsection{Kernelization Effectiveness in Hybrid Approach}
+
+The superior performance of the hybrid algorithm stems primarily from its preprocessing phase. Table \ref{tab:kernel-breakdown} quantifies kernelization effectiveness across instance sizes. Remarkably, the reduction process eliminates 70-92\% of freelancers through dominance and essentiality analysis. For $m=150$, the candidate pool reduces from 150 to merely 12 freelancers, enabling exact brute-force resolution on the reduced instance in negligible time. This preprocessing not only ensures optimality guarantees but also explains the hybrid algorithm's exceptional speed compared to both pure exact and approximate methods.
+
+\begin{table}[H]
+	\centering
+	\caption{Kernelization Effectiveness in Hybrid Algorithm}
+	\label{tab:kernel-breakdown}
+	\begin{tabular}{@{}lcccc@{}}
+		\toprule
+		\textbf{Original m} & \textbf{Reduced m} & \textbf{Reduction \%} & \textbf{Solver Used} & \textbf{Result} \\
+		\midrule
+		10 & 5 & 50\% & Brute Force & Optimum \\
+		20 & 6 & 70\% & Brute Force & Optimum \\
+		50 & 11 & 78\% & Brute Force & Optimum \\
+		150 & 12 & 92\% & Brute Force & Optimum \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Discussion of Results}
+\label{subsec:discussion}
+
+The experimental outcomes reveal several significant patterns regarding algorithm behavior and effectiveness. The greedy algorithm's failure at $m=20$ illustrates a fundamental limitation of locally optimal strategies when confronted with complex trade-offs between specialized and generalist freelancers. Analysis of this instance reveals structural properties where no single freelancer provides dominant cost-coverage ratios, creating solution landscapes with deceptive local optima.
+
+Local search exhibits similar limitations, frequently stagnating at solutions identical to those produced by greedy initialization. This suggests insufficient neighborhood exploration or inadequate diversification mechanisms within the implemented hill-climbing framework. The genetic algorithm demonstrates superior exploration capabilities through its population-based approach, successfully escaping local optima that trap deterministic methods.
+
+The hybrid approach's exceptional performance derives from its synergistic combination of preprocessing and algorithmic adaptation. Kernelization rules effectively exploit problem structure to eliminate dominated candidates while preserving solution optimality. The observed 92\% reduction rate for $m=150$ indicates that real-world MCSC instances may contain substantial redundancy, presenting significant opportunities for computational acceleration through domain-specific analysis.
+
+\subsection{Conclusion of Experimental Analysis}
+\label{subsec:experimental-conclusion}
+
+Empirical evaluation validates the hybrid algorithm as the most effective approach for the MCSC problem, successfully balancing solution quality with computational efficiency. The methodology demonstrates that problem-specific preprocessing through kernelization can dramatically reduce search space complexity, enabling exact solutions on substantially reduced instances. This approach achieves optimality guarantees where pure exact methods prove computationally prohibitive while maintaining execution speeds comparable to simple heuristics. These findings emphasize the critical importance of domain knowledge and preprocessing in addressing NP-hard optimization problems, suggesting that similar hybrid strategies may prove effective for related combinatorial optimization challenges.
+
+	
+\section{Discussion}
+\label{sec:discussion}
+
+The experimental analysis yields three principal insights with significant implications for both theoretical understanding and practical application of the Minimum-Cost Skill-Cover problem.
+
+The algorithmic performance patterns reveal fundamental distinctions between solution strategies. The failure of greedy and local search approaches at $m=20$, contrasted with the success of genetic and hybrid methods, indicates the presence of deceptive local optima that trap simpler heuristics. This phenomenon exemplifies the classic limitation of hill-climbing strategies in combinatorial optimization. More significantly, the hybrid algorithm's exceptional performance demonstrates that kernelization preprocessing can transform NP-hard instances into tractable subproblems, achieving 92\% reduction for $m=150$ while preserving optimality guarantees.
+
+Practical deployment considerations emerge from the efficiency-quality trade-offs observed. The hybrid approach provides optimal solutions with negligible execution time (0.0006 seconds for $m=150$), making it suitable for real-time applications. The genetic algorithm offers reliable performance as a fallback mechanism, particularly for instances where kernelization proves less effective. For operational platforms like TalentBridge Connect, the hybrid algorithm represents the optimal balance, though periodic verification using genetic algorithms could ensure continued robustness.
+
+Several methodological limitations contextualize these findings. The synthetic instance generation may not fully capture real-world skill correlations and cost distributions. The exclusive focus on cost minimization neglects practical factors such as team coordination and freelancer reliability. Additionally, the Python implementation, while suitable for experimentation, introduces performance characteristics that may differ from production environments using compiled languages.
+
+Future research directions include extending kernelization with additional reduction rules, developing more sophisticated local search neighborhoods, and exploring multi-objective formulations that consider secondary criteria like team size and skill redundancy. The algorithmic framework developed here also shows potential for generalization to related problems in team formation and resource-constrained selection.
+
+In conclusion, this research demonstrates that despite theoretical NP-hardness, practical MCSC instances can be solved effectively through algorithms that exploit domain-specific structure. The hybrid approach's success underscores the value of combining theoretical insight with practical engineering in addressing complex combinatorial optimization problems.
+	
+\section{Conclusions}
+\label{sec:conclusions}
+
+This project has conducted a comprehensive investigation of the Minimum-Cost Skill-Cover (MCSC) problem, addressing it through the complete lifecycle of algorithmic problem-solving: from formal definition and complexity analysis to algorithm design, implementation, and empirical evaluation. The research demonstrates how theoretical computer science principles can be effectively applied to solve practical optimization challenges in modern digital labor markets.
+
+\subsection{Main Findings}
+\label{subsec:main-findings}
+
+The formalization of MCSC established a precise mathematical model that captures the essential features of real-world freelancer selection while maintaining analytical tractability. The formulation as an integer linear program with binary coverage constraints provides both clarity for theoretical analysis and a foundation for algorithmic development.
+
+The complexity analysis conclusively established MCSC as NP-complete through a polynomial-time reduction from the classical Set Cover problem. This theoretical result has significant practical implications: it justifies the development of heuristic and approximate algorithms for practical problem instances while explaining the computational intractability of exact approaches for large-scale scenarios.
+
+The experimental evaluation revealed distinct performance characteristics across the implemented algorithms. The brute-force approach, while optimal for small instances ($m \leq 20$), becomes computationally prohibitive beyond this threshold. The greedy algorithm demonstrates exceptional speed but exhibits suboptimal performance in scenarios with complex trade-offs, achieving only 91\% of optimal quality at $m=20$. Local search shows limited improvement over greedy solutions, suggesting insufficient exploration capabilities. The genetic algorithm provides consistent quality across instance sizes but with higher computational overhead. Most significantly, the hybrid algorithm achieves optimal or near-optimal solutions with minimal execution time by effectively combining kernelization preprocessing with adaptive algorithm selection.
+
+\subsection{Contributions}
+\label{subsec:contributions}
+
+This work makes several contributions to both theoretical understanding and practical application. The formal proof of NP-completeness for MCSC establishes its position within the computational complexity hierarchy and provides theoretical justification for heuristic approaches. The development of a kernelization-based hybrid algorithm demonstrates how domain-specific preprocessing can transform NP-hard problems into tractable instances, achieving up to 92\% reduction in problem size while preserving optimality guarantees.
+
+The systematic experimental framework, including a configurable instance generator and comprehensive performance metrics, creates a reproducible foundation for further research on skill-cover problems. The comparative analysis of algorithmic approaches provides empirical evidence of their relative strengths and limitations across varying problem scales, offering practical guidance for platform implementers.
+
+From a methodological perspective, the project exemplifies the complete algorithmic problem-solving process: from informal problem description through mathematical formalization, complexity analysis, algorithm design, implementation, and empirical validation. This end-to-end approach demonstrates how theoretical computer science principles can be effectively translated into practical solutions for real-world optimization challenges.
+
+\subsection{Practical Recommendations}
+\label{subsec:recommendations}
+
+Based on the experimental findings, we recommend the hybrid algorithm as the primary solution approach for operational deployment in platforms like TalentBridge Connect. Its combination of kernelization preprocessing with adaptive algorithm selection achieves an optimal balance between solution quality and computational efficiency. The algorithm's ability to solve instances with 150 freelancers in under 0.001 seconds while maintaining optimality makes it suitable for real-time applications with stringent performance requirements.
+
+For practical implementation, we suggest the following configuration:
+\begin{itemize}
+	\item Implement kernelization as a mandatory preprocessing phase to eliminate dominated freelancers
+	\item Use exact methods for instances reduced to 20 or fewer candidates
+	\item Apply greedy algorithms with local search refinement for medium-sized instances
+	\item Employ genetic algorithms for complex instances where kernelization provides limited reduction
+	\item Incorporate periodic validation using multiple algorithms to ensure solution quality
+\end{itemize}
+
+The kernelization phase not only accelerates computation but also provides valuable business intelligence by identifying freelancers who are consistently dominated in the market, potentially informing platform recommendations and skill development guidance.
+
+\subsection{Future Work}
+\label{subsec:future-work}
+
+Several promising directions for future research emerge from this investigation. Extending the kernelization phase with additional reduction rules based on linear programming relaxations or subset cover relationships could further improve preprocessing effectiveness. Developing more sophisticated local search mechanisms with adaptive neighborhood structures and tabu search elements might enhance solution refinement capabilities.
+
+Exploring multi-objective formulations that consider additional criteria such as team size minimization, skill coverage redundancy, freelancer reliability ratings, or temporal availability constraints would better capture real-world decision factors. Investigating online versions of the problem, where freelancer availability and project requirements evolve dynamically, represents another valuable extension.
+
+The algorithmic framework developed for MCSC shows potential for generalization to related problems in team formation, resource-constrained selection, and service composition. Future work could explore these connections and develop unified approaches for this class of covering and selection problems.
+
+Finally, validating the algorithms on real-world data from freelance platforms would provide important insights into their practical performance and identify opportunities for domain-specific optimizations not captured in synthetic instances.
+
+\subsection{Final Remarks}
+\label{subsec:final-remarks}
+
+This research demonstrates that despite theoretical NP-hardness, practical instances of the Minimum-Cost Skill-Cover problem can be solved effectively through careful algorithm design that exploits domain-specific structure. The hybrid approach's success underscores a fundamental principle in combinatorial optimization: theoretical complexity classifications provide essential guidance but should not preclude the development of effective practical solutions for important real-world problems.
+
+The project illustrates the enduring relevance of classical algorithmic techniques—from exact enumeration and greedy heuristics to genetic algorithms and kernelization—while showing how their thoughtful integration can yield solutions superior to any individual approach. As digital labor markets continue to grow and evolve, such algorithmic solutions will play an increasingly critical role in matching talent with opportunity efficiently and effectively.
+
+Ultimately, this investigation contributes to both the theoretical understanding of covering problems with skill constraints and the practical toolkit available to platform developers, bridging the gap between academic computer science and industrial software engineering in addressing one of the defining optimization challenges of the digital economy.
+	
+	% CONTENIDO A COMPLETAR:
+	% Lista de referencias bibliográficas
+	
+\begin{thebibliography}{9}
+	\bibitem{setcover} 
+	Karp, R. M. (1972). 
+	\textit{Reducibility among combinatorial problems}. 
+	In Complexity of computer computations (pp. 85-103).
+	
+	\bibitem{approx}
+	Vazirani, V. V. (2001). 
+	\textit{Approximation algorithms}. 
+	Springer Science \& Business Media.
+	
+	\bibitem{metaheuristica}
+	Talbi, E. G. (2009). 
+	\textit{Metaheuristics: from design to implementation}. 
+	John Wiley \& Sons.
+	
+	\bibitem{kleinberg}
+	Kleinberg, J., \& Tardos, \'{E}. (2005). 
+	\textit{Algorithm Design}. 
+	Pearson Education.
+	
+	\bibitem{cormen}
+	Cormen, T. H., Leiserson, C. E., Rivest, R. L., \& Stein, C. (2009). 
+	\textit{Introduction to Algorithms} (3rd ed.). 
+	MIT Press.
+	
+	\bibitem{talbi}
+	Talbi, E. G. (2009). 
+	\textit{Metaheuristics: from design to implementation}. 
+	John Wiley \& Sons.
+\end{thebibliography}
+	
+	
+\end{document}
