@@ -267,7 +267,7 @@ This section demonstrates that the Minimum-Cost Skill-Cover Problem (MCSC) belon
 	Given a universe $U = \{u_1, u_2, \ldots, u_n\}$, a collection $S = \{S_1, S_2, \ldots, S_m\}$ of subsets of $U$, and an integer $t$, the Set Cover problem consists of determining whether there exists a subcollection $C \subseteq S$ with $|C| \leq t$ such that $\bigcup_{S_i \in C} S_i = U$.
 \end{definition}
 
-Set Cover is a classical NP-complete problem, established by Karp in 1972.
+Set Cover is a classical NP-complete problem, originally established by Karp in his seminal 1972 work \cite{setcover} that identified 21 fundamental NP-complete problems. This classification provides the theoretical foundation for our reduction and subsequent algorithm design decisions.
 
 \begin{theorem}
 	There exists a polynomial-time reduction from Set Cover to Minimum-Cost Skill-Cover.
@@ -477,6 +477,8 @@ The greedy algorithm iteratively selects freelancers based on a cost-effectivene
 	\end{algorithmic}
 \end{algorithm}
 
+For the classical Weighted Set Cover problem, the greedy algorithm achieves an approximation ratio of $H(\max_i |S_i|) \leq 1 + \ln n$, where $H(k)$ is the $k$-th harmonic number and $n = |U|$ \cite{approx}. Although MCSC incorporates skill levels, the greedy heuristic maintains comparable performance guarantees in practice, following principles established in approximation algorithm theory \cite{cormen}.
+
 \subsubsection{Approximation Guarantee}
 For the classical Weighted Set Cover problem, the greedy algorithm achieves an approximation ratio of $H(\max_i |S_i|) \leq 1 + \ln n$, where $H(k)$ is the $k$-th harmonic number and $n = |U|$. Although MCSC incorporates skill levels, the greedy heuristic maintains comparable performance guarantees in practice.
 
@@ -530,7 +532,7 @@ Local search begins with an initial solution (typically from the greedy algorith
 \end{algorithm}
 
 \subsubsection{Genetic Algorithm}
-The genetic algorithm employs evolutionary principles to explore the solution space through selection, crossover, and mutation operations.
+The genetic algorithm employs evolutionary principles to explore the solution space through selection, crossover, and mutation operations, following established metaheuristic frameworks \cite{metaheuristica,talbi}. This population-based approach enables escape from local optima that trap deterministic methods, providing robust exploration capabilities for complex combinatorial landscapes.
 
 \begin{algorithm}[H]
 	\caption{Genetic Algorithm for MCSC}
@@ -609,6 +611,8 @@ Based on empirical observations, we propose a hybrid strategy that adapts to ins
 		\State \Return $\text{solution}$
 	\end{algorithmic}
 \end{algorithm}
+
+The hybrid approach integrates kernelization techniques with adaptive algorithm selection based on instance size thresholds, following principles of algorithm design that emphasize problem decomposition and appropriate technique selection \cite{kleinberg}. This approach exemplifies the algorithmic engineering philosophy of combining multiple techniques to address different aspects of complex problems.
 
 \subsection{Theoretical Analysis Summary}
 \label{subsec:theoretical-analysis}
@@ -775,7 +779,7 @@ Empirical evaluation validates the hybrid algorithm as the most effective approa
 
 The experimental analysis yields three principal insights with significant implications for both theoretical understanding and practical application of the Minimum-Cost Skill-Cover problem.
 
-The algorithmic performance patterns reveal fundamental distinctions between solution strategies. The failure of greedy and local search approaches at $m=20$, contrasted with the success of genetic and hybrid methods, indicates the presence of deceptive local optima that trap simpler heuristics. This phenomenon exemplifies the classic limitation of hill-climbing strategies in combinatorial optimization. More significantly, the hybrid algorithm's exceptional performance demonstrates that kernelization preprocessing can transform NP-hard instances into tractable subproblems, achieving 92\% reduction for $m=150$ while preserving optimality guarantees.
+The algorithmic performance patterns reveal fundamental distinctions between solution strategies. The failure of greedy and local search approaches at $m=20$, contrasted with the success of genetic and hybrid methods, indicates the presence of deceptive local optima that trap simpler heuristics. This phenomenon exemplifies the classic limitation of hill-climbing strategies in combinatorial optimization \cite{kleinberg}. More significantly, the hybrid algorithm's exceptional performance demonstrates that kernelization preprocessing can transform NP-hard instances into tractable subproblems, achieving 92\% reduction for $m=150$ while preserving optimality guarantees. The successful application of kernelization techniques adapted from parameterized complexity theory demonstrates that practical instances may exhibit structural properties amenable to significant reduction despite theoretical hardness \cite{cormen}. This aligns with algorithmic design principles that advocate for exploiting problem-specific structure whenever possible \cite{kleinberg}.
 
 Practical deployment considerations emerge from the efficiency-quality trade-offs observed. The hybrid approach provides optimal solutions with negligible execution time (0.0006 seconds for $m=150$), making it suitable for real-time applications. The genetic algorithm offers reliable performance as a fallback mechanism, particularly for instances where kernelization proves less effective. For operational platforms like TalentBridge Connect, the hybrid algorithm represents the optimal balance, though periodic verification using genetic algorithms could ensure continued robustness.
 
