@@ -3,6 +3,9 @@
 \usepackage[english]{babel}
 \usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{algorithm}
@@ -17,12 +20,12 @@
 \usepackage{xcolor}
 \usepackage{multirow}
 
-\newtheorem{theorem}{Teorema}[section]
-\newtheorem{definition}{Definición}[section]
-\newtheorem{proposition}{Proposición}[section]
-\newtheorem{lemma}{Lema}[section]
-\newtheorem{corollary}{Corolario}[section]
-\newtheorem{proof}{Demostración}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{proof}{Proof}
 
 % Configuración de márgenes
 \geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
@@ -51,9 +54,9 @@
 }
 
 % Título del documento
-\title{\textbf{Minimum-Cost Skill-Cover Problem} \\
-	\large Diseño y Análisis de Algoritmos \\
-	4to Año, Ciencia de la Computación}
+\title{ \textbf{The Russian Talent Agency Problem: An Algorithmic Approach to Minimum-Cost Skill-Cover} \\
+	\vspace*{0.3cm} \large Algorithm Design and Analysis \\
+	4th Year, Computer Science}
 \author{Gabriel Andrés Pla Lasa \\ Carlos Daniel Largacha Leal}
 \date{\today}
 
@@ -67,13 +70,14 @@
 	
 	The problem is formally defined as an integer linear programming model with binary coverage constraints, capturing the essential features of real-world freelancer selection while maintaining analytical tractability. Through a polynomial-time reduction from the classical Set Cover problem, we prove MCSC is NP-complete, justifying the development of heuristic and approximate solution approaches.
 	
-	We design and implement five algorithmic strategies: (1) an exact brute-force algorithm for small instances, (2) a greedy approximation algorithm based on cost-effectiveness ratios, (3) a local search improvement heuristic, (4) a genetic algorithm employing evolutionary operators, and (5) a novel hybrid approach combining kernelization preprocessing with adaptive algorithm selection. The hybrid algorithm leverages dominance analysis to reduce problem instances by up to 92\% while preserving optimality guarantees.
+	We design and implement five algorithmic strategies: (1) an exact brute-force algorithm for small instances, (2) a greedy approximation algorithm based on cost-effectiveness ratios, (3) a local search improvement heuristic, (4) a genetic algorithm employing evolutionary operators, and (5) a novel hybrid approach combining kernelization preprocessing with adaptive algorithm selection.
 	
 	Experimental evaluation on synthetic instances ranging from 10 to 150 freelancers demonstrates that the hybrid algorithm achieves optimal or near-optimal solutions with exceptional efficiency, solving the largest instances in under 0.001 seconds. Comparative analysis reveals that while greedy algorithms offer minimal execution time, they exhibit suboptimal performance in complex scenarios, whereas genetic algorithms provide consistent quality at higher computational cost.
 	
 	The primary contribution of this work is the demonstration that domain-specific preprocessing through kernelization can transform NP-hard optimization problems into tractable instances, enabling exact solutions on substantially reduced search spaces. This research provides both theoretical insights into the complexity of skill-cover problems and practical algorithmic solutions for real-world platform implementation.
 	
 	\textbf{Keywords:} Minimum-Cost Skill-Cover, NP-completeness, combinatorial optimization, kernelization, hybrid algorithms, freelance platform optimization, set covering, genetic algorithms, approximation algorithms.
+
 \end{abstract}
 	
 	\tableofcontents
@@ -442,6 +446,7 @@ A more efficient implementation uses backtracking with pruning strategies:
 \label{subsec:approximation-algorithms}
 
 \subsubsection{Greedy Approximation Algorithm}
+\label{alg:greedy_appr}
 The greedy algorithm iteratively selects freelancers based on a cost-effectiveness ratio, prioritizing those covering many uncovered skills at low cost.
 
 \begin{algorithm}[H]
@@ -477,17 +482,13 @@ The greedy algorithm iteratively selects freelancers based on a cost-effectivene
 	\end{algorithmic}
 \end{algorithm}
 
-For the classical Weighted Set Cover problem, the greedy algorithm achieves an approximation ratio of $H(\max_i |S_i|) \leq 1 + \ln n$, where $H(k)$ is the $k$-th harmonic number and $n = |U|$ \cite{approx}. Although MCSC incorporates skill levels, the greedy heuristic maintains comparable performance guarantees in practice, following principles established in approximation algorithm theory \cite{cormen}.
-
 \subsubsection{Approximation Guarantee}
-For the classical Weighted Set Cover problem, the greedy algorithm achieves an approximation ratio of $H(\max_i |S_i|) \leq 1 + \ln n$, where $H(k)$ is the $k$-th harmonic number and $n = |U|$. Although MCSC incorporates skill levels, the greedy heuristic maintains comparable performance guarantees in practice.
 
-\subsubsection{Variant: Effective Cost Greedy}
-An alternative approach selects the freelancer with minimum effective cost:
-\[
-\text{effective\_cost}(f) = \frac{f.\text{cost}}{|\{h \in R \setminus \text{covered\_skills} \mid f.\text{level}(h) \geq \text{req}(h)\}|}
-\]
-This variant prioritizes freelancers providing maximum coverage per unit cost.
+The greedy algorithm described in Section \ref{alg:greedy_appr} is a well-established approximation strategy for covering problems, with formal performance guarantees derived from its application to the classical Weighted Set Cover problem \cite{approx} \cite{cormen}. In that canonical formulation, where each set $S_i \subseteq U$ has an associated cost $c_i$ and the objective is to cover all elements in the universe $U$ at minimum total cost, the greedy algorithm---which iteratively selects the set with the best cost-effectiveness ratio---achieves an approximation factor of $H(\max_i |S_i|)$, where $H(k) = \sum_{i=1}^k \frac{1}{i}$ is the $k$-th harmonic number. Since $H(k) \leq 1 + \ln k$, this yields an approximation ratio of $O(\log n)$ for an instance with $n = |U|$ elements to cover.
+
+The Minimum-Cost Skill-Cover problem can be viewed as a generalization of Weighted Set Cover, where each element corresponds to a required skill, and each set corresponds to the subset of skills a freelancer covers at or above the required proficiency level. The greedy algorithm applied to MCSC follows the same principle of cost-effectiveness, selecting in each iteration the freelancer that covers the largest number of yet-uncovered skills per unit cost. Although the presence of skill levels introduces additional structure not present in the classic Set Cover, the underlying combinatorial nature of the coverage constraints remains unchanged. Consequently, the same approximation guarantees apply, provided that the coverage matrix $a_{ij}$ correctly reflects whether a freelancer satisfies the minimum level requirement $\text{req}(h_j)$ for each skill.
+
+It is important to note that this $O(\log n)$ guarantee is a worst-case bound. In practice, the greedy algorithm often performs significantly better, particularly on instances where skill distributions and costs are reasonably balanced. However, as demonstrated experimentally in Section \ref{sec:experimental-analysis}, there exist adversarial instances---such as the $m=20$ case---where the greedy heuristic deviates from optimality due to its myopic decision-making. This behavior is consistent with the theoretical limitations of greedy algorithms for covering problems, where locally optimal choices can lead to globally suboptimal solutions.
 
 \subsection{Heuristic and Metaheuristic Approaches}
 \label{subsec:heuristics}
@@ -623,17 +624,17 @@ Table \ref{tab:algorithm-comparison} summarizes the theoretical properties of th
 	\centering
 	\caption{Theoretical Comparison of Proposed Algorithms}
 	\label{tab:algorithm-comparison}
-	\begin{tabular}{@{}lccc@{}}
+	\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{5cm}@{}}
 		\toprule
 		\textbf{Algorithm} & \textbf{Time Complexity} & \textbf{Solution Quality} & \textbf{Application Scope} \\
 		\midrule
-		Exact Brute-Force & $O(2^m \cdot m \cdot n)$ & Optimal & Small instances ($m \leq 20$) \\
-		Greedy Approximation & $O(m^2 \cdot n)$ & $O(\log n)$-approximation & Fast decent solutions \\
-		Local Search & $O(k \cdot m^2 \cdot n)$ & Improves initial solution & Post-processing refinement \\
-		Genetic Algorithm & $O(P \cdot G \cdot m \cdot n)$ & High-quality exploration & Large-scale instances \\
+		Exact Brute-Force & $O(2^m \cdot m \cdot n)$ & Optimal & Small instances ($m \leq 20$) \\ \addlinespace
+		Greedy Approximation & $O(m^2 \cdot n)$ & $O(\log n)$-approximation & Fast decent solutions \\ \addlinespace
+		Local Search & $O(k \cdot m^2 \cdot n)$ & Improves initial solution & Post-processing refinement \\ \addlinespace
+		Genetic Algorithm & $O(P \cdot G \cdot m \cdot n)$ & High-quality exploration & Large-scale instances \\ \addlinespace
 		Hybrid Adaptive & Variable & Balanced trade-off & General-purpose deployment \\
 		\bottomrule
-	\end{tabular}
+	\end{tabularx}
 \end{table}
 
 The algorithm design presented in this section provides a comprehensive toolkit for addressing MCSC instances of varying sizes and characteristics. The exact algorithm serves as a baseline for validation, while the approximate algorithms offer practical solutions for real-world applications where optimality must be traded for computational efficiency.
@@ -654,7 +655,7 @@ Table \ref{tab:algorithm-parameters} details the specific parameter configuratio
 	\centering
 	\caption{Algorithm Parameters Configuration}
 	\label{tab:algorithm-parameters}
-	\begin{tabular}{@{}lp{8cm}@{}}
+	\begin{tabular}{@{}lp{10cm}@{}}
 		\toprule
 		\textbf{Algorithm} & \textbf{Parameters and Values} \\
 		\midrule
