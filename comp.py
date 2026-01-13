@@ -1,4 +1,5 @@
 import time
+import math
 from models.models import Freelancer, Proyecto
 from algorithms.brute_force import SolucionFuerzaBruta
 from utility.test_generator import crear_instancia_aleatoria
@@ -15,7 +16,7 @@ def comparar_algoritmos():
     resultados = []
     
     # Rango de pruebas (ajustar según tiempo)
-    instancias = [10, 20, 50, 150]
+    instancias = [10, 20, 50, 150, 300, 500, 750, 1000]
     
     for m in instancias:
         print(f"\n--- Instancia con m={m} freelancers ---")
@@ -23,7 +24,8 @@ def comparar_algoritmos():
         # Crear instancia
         freelancers, proyecto = crear_instancia_aleatoria(
             m=m, 
-            n_habilidades=min(10, m//2 + 2),
+            n_habilidades=max(10, m//2 + 2),
+            n_requisitos=int(math.sqrt(m)),
             densidad=0.4,
             seed=m*10
         )
@@ -34,7 +36,7 @@ def comparar_algoritmos():
         
         # 1. Fuerza Bruta (Solo para m <= 20)
         costo_fb = float('inf')
-        if m <= 20:
+        if m <= 900:
             print("1. Fuerza Bruta: ", end="", flush=True)
             sol_fb = SolucionFuerzaBruta(freelancers, proyecto)
             start = time.time()

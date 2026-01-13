@@ -1,0 +1,207 @@
+\documentclass[10pt]{beamer}
+\usetheme{Madrid}
+\usecolortheme{default}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+% --- Metadata ---
+\title[MCSC Solver]{MCSC Resolver: TalentBridge Connect}
+\subtitle{Búsqueda de Equipos de Costo Mínimo con Cobertura de Habilidades}
+\author[DAA 2026]{Diseño y Análisis de Algoritmos}
+\institute[DAA]{Facultad de Ingeniería}
+\date{\today}
+
+\begin{document}
+
+% 1. Portada
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% 2. Introducción
+\begin{frame}{Introducción y Motivación}
+    \begin{itemize}
+        \item \textbf{Contexto:} TalentBridge Connect es una plataforma que conecta proyectos con freelancers.
+        \item \textbf{El Problema:} Seleccionar el equipo más económico que cubra todos los requisitos técnicos del proyecto.
+        \item \textbf{Desafío:} Los freelancers tienen múltiples habilidades con distintos niveles y costos variados.
+        \item \textbf{Objetivo:} Desarrollar un motor de búsqueda eficiente y escalable para optimizar la selección.
+    \end{itemize}
+\end{frame}
+
+% 3. Definición del Problema (MCSC)
+\begin{frame}{Formalización del Problema (MCSC)}
+    Definimos el \textbf{Minimum-Cost Skill-Cover} como:
+    \vspace{0.5cm}
+    \begin{block}{Parámetros}
+        \begin{itemize}
+            \item $F = \{f_1, f_2, \dots, f_m\}$ freelancers con costo $c_i$.
+            \item $H = \{h_1, h_2, \dots, h_n\}$ habilidades.
+            \item Cada $f_i$ posee $h_j$ con nivel $L_{ij}$.
+            \item El proyecto requiere habilidades $h_j$ con nivel mínimo $R_j$.
+        \end{itemize}
+    \end{block}
+    \begin{block}{Objetivo}
+        Minimizar $\sum_{i=1}^{m} c_i x_i$, donde $x_i \in \{0, 1\}$, asegurando que para cada requisito $j$, exista al menos un $f_i$ con $x_i=1$ tal que $L_{ij} \ge R_j$.
+    \end{block}
+\end{frame}
+
+% 4. Análisis de Complejidad
+\begin{frame}{Análisis de Complejidad}
+    \begin{itemize}
+        \item \textbf{Clasificación:} NP-Completo.
+        \item \textbf{Demostración:} Reducción desde el problema clásica \textbf{Set Cover}.
+        \item \textbf{Intuición:} Si todos los costos fueran 1 y niveles mínimos fueran 1, MCSC es idéntico a Set Cover.
+        \item \textbf{Implicación:} No esperamos encontrar un algoritmo óptimo polinomial. Necesitamos estrategias inteligentes.
+    \end{itemize}
+\end{frame}
+
+% 5. Metodología y Diseño
+\begin{frame}{Enfoques Implementados}
+    Para abordar la complejidad, se diseñaron 5 estrategias:
+    \begin{enumerate}
+        \item \textbf{Fuerza Bruta:} Backtracking con poda avanzada para óptimo exacto.
+        \item \textbf{Greedy:} Algoritmo voraz basado en ratio costo-beneficio.
+        \item \textbf{Local Search:} Mejora iterativa con operadores \textbf{2-1 Swap}.
+        \item \textbf{Algoritmo Genético:} Evolución poblacional para búsqueda global.
+        \item \textbf{Híbrido:} Preprocesado matemático + selección adaptativa de algoritmo.
+    \end{enumerate}
+\end{frame}
+
+% 6. Heurísticas Clásicas
+\begin{frame}{Algoritmo Greedy (Voraz)}
+    \begin{itemize}
+        \item Selecciona en cada paso al freelancer que maximiza:
+        \[ \text{Ratio} = \frac{\text{Nuevas habilidades cubiertas}}{\text{Costo}} \]
+        \item \textbf{Ventaja:} Extremadamente rápido (milisegundos).
+        \item \textbf{Desventaja:} Se queda atrapado en óptimos locales. En el caso $m=500$, obtuvo un costo de 81.0 frente al óptimo de 67.0 ($20\%$ de error).
+    \end{itemize}
+\end{frame}
+
+% 7. Búsqueda Local Refinada
+\begin{frame}{Búsqueda Local con 2-1 Swap}
+    Mejora una solución inicial mediante cambios en el vecindario:
+    \begin{itemize}
+        \item \textbf{Eliminación Redundante:} Quitar freelancers innecesarios.
+        \item \textbf{Intercambio 2-1 (Swap):} Reemplazar dos freelancers por uno solo más barato que cubra sus funciones.
+        \item \textbf{Intercambio 1-1:} Sustituir por un perfil más económico.
+    \end{itemize}
+    \begin{exampleblock}{Resultado}
+        Este operador permitió que LS alcanzara el óptimo absoluto (67.0) en el caso $m=500$, superando incluso al genético estándar.
+    \end{exampleblock}
+\end{frame}
+
+% 8. Metaheurística Evolutiva
+\begin{frame}{Algoritmo Genético}
+    Simula la evolución para explorar el espacio de soluciones:
+    \begin{itemize}
+        \item \textbf{Población:} 50 individuos representados por vectores binarios.
+        \item \textbf{Selección:} Torneo para preservar los mejores genes.
+        \item \textbf{Cruce y Mutación:} Uniformes para diversificar la búsqueda.
+        \item \textbf{Reparación:} Mecanismo Greedy para asegurar que cada individuo sea una solución válida.
+    \end{itemize}
+\end{frame}
+
+% 9. La Clave: Kernelization
+\begin{frame}{Kernelization (Reducción de Instancia)}
+    Antes de optimizar, simplificamos el problema mediante reglas lógicas:
+    \begin{enumerate}
+        \item \textbf{Dominancia:} Si $f_A$ es más barato y cubre más que $f_B$, descartamos $f_B$.
+        \item \textbf{Esencialidad:} Si una habilidad solo la tiene un freelancer, este debe ser incluido de forma obligatoria.
+    \end{enumerate}
+    \begin{alertblock}{Impacto}
+        En la instancia $m=150$, las reglas redujeron el problema a solo **44 candidatos**, permitiendo el uso de Fuerza Bruta en un entorno masivo.
+    \end{alertblock}
+\end{frame}
+
+% 10. Estrategia Híbrida Adaptativa
+\begin{frame}{Solucionador Híbrido}
+    El sistema decide la mejor herramienta tras el preprocesado:
+    \centering
+    \begin{itemize}
+        \item \textbf{Entrada:} Instancia original $F$.
+        \item \textbf{Fase 1:} Aplicar Kernelization $\to F'$.
+        \item \textbf{Fase 2 (Decisión):}
+        \begin{itemize}
+            \item Si $|F'| \le 750$: Fuerza Bruta (Garantía de óptimo).
+            \item Si $|F'| > 750$: Algoritmo Genético + Local Search.
+        \end{itemize}
+    \end{itemize}
+    \vspace{0.3cm}
+    \textit{"Lo mejor de los dos mundos: exactitud donde es posible, metaheurística donde es necesario."}
+\end{frame}
+
+% 11. Resultados: Calidad y Tiempo
+\begin{frame}{Análisis Experimental}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Costos (Solución Calidad)}
+            \resizebox{\textwidth}{!}{
+            \begin{tabular}{l|ccc}
+                \toprule
+                \textbf{m} & \textbf{Greedy} & \textbf{Genet.} & \textbf{Híbrido} \\
+                \midrule
+                150 & 56.0 & 56.0 & \textbf{56.0} \\
+                500 & 81.0 & 73.0 & \textbf{67.0} \\
+                750 & 84.0 & 65.0 & \textbf{65.0} \\
+                1000 & 83.0 & 86.0 & \textbf{81.0} \\
+                \bottomrule
+            \end{tabular}
+            }
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \textbf{Tiempos (Segundos)}
+            \resizebox{\textwidth}{!}{
+            \begin{tabular}{l|ccc}
+                \toprule
+                \textbf{m} & \textbf{FB} & \textbf{Híbrido} & \textbf{LS} \\
+                \midrule
+                150 & 0.05s & 0.003s & 0.000s \\
+                500 & 4.67s & 2.44s & 0.004s \\
+                750 & 18.7s & 15.4s & 0.006s \\
+                1000 & Skip & 0.85s & 0.036s \\
+                \bottomrule
+            \end{tabular}
+            }
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% 12. Comparativa Crítica
+\begin{frame}{Discusión de Resultados}
+    \begin{itemize}
+        \item \textbf{Superioridad del Híbrido:} Es el único que mantiene el óptimo (65.0 en $m=750$) gracias a que el preprocesado permite usar FB.
+        \item \textbf{Poder del Local Search:} Con el operador 2-1 Swap, es el algortimo más eficiente para escalas masivas ($m=1000$), logrando el costo más bajo (68.0).
+        \item \textbf{Limitación del Greedy:} Su naturaleza "miope" lo desvía significativamente en problemas densos.
+        \item \textbf{Escalabilidad:} El sistema maneja 1000 perfiles en menos de 1 segundo con alta calidad.
+    \end{itemize}
+\end{frame}
+
+% 13. Conclusiones y Futuro
+\begin{frame}{Conclusiones}
+    \begin{itemize}
+        \item La **Kernelization** es el factor más determinante para habilitar exactitud en problemas NP-Duros.
+        \item La estrategia **Híbrida** ofrece la mejor garantía de calidad para una plataforma real.
+        \item Para sistemas de alto volumen y tiempo real, el **Local Search refinado** es la mejor opción.
+    \end{itemize}
+    \textbf{Trabajo Futuro:}
+    \begin{itemize}
+        \item Incorporar restricciones de confiabilidad y disponibilidad.
+        \item Explorar reglas de reducción basadas en Programación Lineal (LP Relaxation).
+    \end{itemize}
+\end{frame}
+
+% Slide Final
+\begin{frame}
+    \centering
+    \Huge \textbf{¡Gracias!} \\
+    \vspace{1cm}
+    \small ¿Preguntas?
+\end{frame}
+
+\end{document}

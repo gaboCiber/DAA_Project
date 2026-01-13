@@ -29,14 +29,14 @@ class SolucionHibrida:
         costo_optimo = float('inf')
         
         # 2. Selección de Estrategia
-        if m <= 20:
+        if m <= 900:
             # Estrategia Exacta
             self.log_estrategia += " Usando Fuerza Bruta (Exacto)."
             fb = SolucionFuerzaBruta(candidatos, self.proyecto)
             # Usamos la versión con podas que es la más rápida exacta
             equipo_optimo, costo_optimo = fb.resolver_backtracking_con_podas_avanzadas()
             
-        elif m <= 100:
+        elif m <= 500:
             # Estrategia Metaheurística Ligera (Greedy + Local Search)
             self.log_estrategia += " Usando Greedy + Búsqueda Local."
             greedy = SolucionGreedy(candidatos, self.proyecto)

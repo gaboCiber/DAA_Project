@@ -3,65 +3,81 @@ class SolucionLocalSearch:
         self.freelancers = freelancers
         self.proyecto = proyecto
 
+class SolucionLocalSearch:
+    def __init__(self, freelancers, proyecto):
+        self.freelancers = freelancers
+        self.proyecto = proyecto
+
     def resolver_local_search(self, solucion_inicial):
         """
-        Mejora una solución inicial usando búsqueda local (Hill Climbing).
-        Operadores:
-        1. Eliminar redundantes.
-        2. Intercambio 1-1 (Swap): Reemplazar un freelancer por otro más barato.
+        Mejora una solución inicial usando búsqueda local.
+        Sigue fielmente el Algoritmo 4.3 del informe:
+        1. Intercambio 2-1: Reemplazar dos freelancers por uno más barato.
+        2. Eliminación redundante: Quitar freelancers innecesarios.
+        3. Intercambio 1-1: Reemplazar uno por uno (Extensión adicional).
         """
-        mejor_solucion = list(solucion_inicial) # Copia
+        mejor_solucion = list(solucion_inicial)
         mejor_costo = sum(f.costo for f in mejor_solucion)
         
         mejorando = True
-        
         while mejorando:
             mejorando = False
             
-            # 1. Intentar eliminar redundantes
-            solucion_reducida = self.eliminar_redundantes(mejor_solucion)
-            costo_reducido = sum(f.costo for f in solucion_reducida)
-            
-            if costo_reducido < mejor_costo:
-                mejor_solucion = solucion_reducida
-                mejor_costo = costo_reducido
-                mejorando = True
-                continue # Reiniciar búsqueda desde la nueva mejor
-            
-            # 2. Intentar intercambio 1-1
-            # Para cada f_in (en solución) y f_out (fuera de solución)
+            # Buscamos dos freelancers (f1, f2) que puedan ser reemplazados por f3
+            for i in range(len(mejor_solucion)):
+                for j in range(i + 1, len(mejor_solucion)):
+                    f1 = mejor_solucion[i]
+                    f2 = mejor_solucion[j]
+                    
+                    candidatos_fuera = [f for f in self.freelancers if f not in mejor_solucion]
+                    for f3 in candidatos_fuera:
+                        # Condición de costo: f3 debe ser más barato que la suma de f1 y f2
+                        if f3.costo < (f1.costo + f2.costo):
+                            # Probar reemplazo
+                            propuesta = [f for f in mejor_solucion if f is not f1 and f is not f2]
+                            propuesta.append(f3)
+                            
+                            if self.es_solucion_valida(propuesta):
+                                mejor_solucion = propuesta
+                                mejor_costo = sum(f.costo for f in mejor_solucion)
+                                mejorando = True
+                                break
+                    if mejorando: break
+                if mejorando: break
+            if mejorando: continue # Reiniciar bucle principal (First Improvement)
+
+            for freelancer in mejor_solucion:
+                propuesta = [f for f in mejor_solucion if f is not freelancer]
+                if self.es_solucion_valida(propuesta):
+                    mejor_solucion = propuesta
+                    mejor_costo = sum(f.costo for f in mejor_solucion)
+                    mejorando = True
+                    break
+            if mejorando: continue
+
             candidatos_fuera = [f for f in self.freelancers if f not in mejor_solucion]
-            
             for i, f_in in enumerate(mejor_solucion):
                 for f_out in candidatos_fuera:
-                    # Condición de poda rápida: el entrante debe ser más barato
-                    if f_out.costo >= f_in.costo:
-                        continue
-                        
-                    # Probar intercambio
-                    nueva_propuesta = mejor_solucion[:i] + mejor_solucion[i+1:] + [f_out]
-                    
-                    if self.es_solucion_valida(nueva_propuesta):
-                        mejor_solucion = nueva_propuesta
-                        mejor_costo = sum(f.costo for f in mejor_solucion)
-                        mejorando = True
-                        break # First Improvement
-                
+                    # Solo intentamos si el nuevo costo total es menor
+                    nuevo_costo = mejor_costo - f_in.costo + f_out.costo
+                    if nuevo_costo < mejor_costo:
+                        propuesta = mejor_solucion[:i] + mejor_solucion[i+1:] + [f_out]
+                        if self.es_solucion_valida(propuesta):
+                            mejor_solucion = propuesta
+                            mejor_costo = nuevo_costo
+                            mejorando = True
+                            break
                 if mejorando: break
-            
-            # Aquí podríamos agregar Swap 2-1 si fuera necesario para más calidad
             
         return mejor_solucion, mejor_costo
 
     def eliminar_redundantes(self, equipo):
-        """Intenta eliminar freelancers sin romper la validez"""
-        # Ordenar por costo descendente para intentar quitar los caros primero
+        """Versión batch-greedy (usada por el Genético)"""
         equipo_ordenado = sorted(equipo, key=lambda f: f.costo, reverse=True)
-        equipo_final = equipo_ordenado.copy()
+        equipo_final = list(equipo_ordenado)
         
         for freelancer in equipo_ordenado:
-            # Probar quitar este freelancer
-            propuesta = [f for f in equipo_final if f.id != freelancer.id]
+            propuesta = [f for f in equipo_final if f is not freelancer]
             if self.es_solucion_valida(propuesta):
                 equipo_final = propuesta
                 
@@ -69,6 +85,8 @@ class SolucionLocalSearch:
 
     def es_solucion_valida(self, equipo):
         """Verifica si el equipo cubre todos los requisitos"""
+        if not equipo and self.proyecto.requisitos:
+            return False
         for hab, nivel_req in self.proyecto.requisitos.items():
             cubierto = False
             for f in equipo:
