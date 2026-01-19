@@ -138,38 +138,49 @@
 
 % 11. Resultados: Calidad y Tiempo
 \begin{frame}{Análisis Experimental}
-    \begin{columns}
-        \begin{column}{0.5\textwidth}
+
             \textbf{Costos (Solución Calidad)}
             \resizebox{\textwidth}{!}{
-            \begin{tabular}{l|ccc}
-                \toprule
-                \textbf{m} & \textbf{Greedy} & \textbf{Genet.} & \textbf{Híbrido} \\
-                \midrule
-                150 & 56.0 & 56.0 & \textbf{56.0} \\
-                500 & 81.0 & 73.0 & \textbf{67.0} \\
-                750 & 84.0 & 65.0 & \textbf{65.0} \\
-                1000 & 83.0 & 86.0 & \textbf{81.0} \\
-                \bottomrule
-            \end{tabular}
+	\begin{tabular}{@{}lccccc@{}}
+	\toprule
+	\textbf{m} & \textbf{Brute-Force} & \textbf{Greedy} & \textbf{Local Search} & \textbf{Genetic} & \textbf{Hybrid} \\
+	\midrule
+	10 & 52.0 & 52.0 & 52.0 & 52.0 & 52.0 \\
+	20 & 149.0 & 149.0 & 149.0 & 149.0 & 149.0 \\
+	50 & 96.0 & 116.0 & 96.0 & 96.0 & 96.0 \\
+	150 & 56.0 & 56.0 & 56.0 & 56.0 & 56.0 \\
+	300 & 67.0 & 67.0 & 67.0 & 67.0 & 67.0 \\
+	500 & 67.0 & 81.0 & 67.0 & 73.0 & 67.0 \\
+	750 & 65.0 & 84.0 & 74.0 & 65.0 & 65.0 \\
+	1000 & N/A & 83.0 & 68.0 & 86.0 & 81.0 \\
+	\bottomrule
+\end{tabular}
             }
-        \end{column}
-        \begin{column}{0.5\textwidth}
-            \textbf{Tiempos (Segundos)}
-            \resizebox{\textwidth}{!}{
-            \begin{tabular}{l|ccc}
-                \toprule
-                \textbf{m} & \textbf{FB} & \textbf{Híbrido} & \textbf{LS} \\
-                \midrule
-                150 & 0.05s & 0.003s & 0.000s \\
-                500 & 4.67s & 2.44s & 0.004s \\
-                750 & 18.7s & 15.4s & 0.006s \\
-                1000 & Skip & 0.85s & 0.036s \\
-                \bottomrule
-            \end{tabular}
-            }
-        \end{column}
-    \end{columns}
+    
+
+\end{frame}
+
+\begin{frame}{Análisis Experimental}
+	
+
+			\textbf{Tiempos (Segundos)}
+			\resizebox{\textwidth}{!}{
+	\begin{tabular}{@{}lccccc@{}}
+	\toprule
+	\textbf{m} & \textbf{Brute-Force} & \textbf{Greedy} & \textbf{Local Search} & \textbf{Genetic} & \textbf{Hybrid} \\
+	\midrule
+	10 & 0.0001 & 0.0000 & 0.0000 & 0.0166 & 0.0001 \\
+	20 & 0.0005 & 0.0000 & 0.0001 & 0.0211 & 0.0002 \\
+	50 & 0.0028 & 0.0001 & 0.0002 & 0.0223 & 0.0007 \\
+	150 & 0.0506 & 0.0003 & 0.0004 & 0.0300 & 0.0039 \\
+	300 & 0.7608 & 0.0011 & 0.0015 & 0.0533 & 0.2966 \\
+	500 & 4.6766 & 0.0033 & 0.0040 & 0.0673 & 2.4421 \\
+	750 & 18.7862 & 0.0054 & 0.0067 & 0.1189 & 15.4450 \\
+	1000 & N/A & 0.0213 & 0.0360 & 0.4829 & 0.8506 \\
+	\bottomrule
+\end{tabular}
+			}
+
 \end{frame}
 
 % 12. Comparativa Crítica
@@ -196,12 +207,8 @@
     \end{itemize}
 \end{frame}
 
-% Slide Final
 \begin{frame}
-    \centering
-    \Huge \textbf{¡Gracias!} \\
-    \vspace{1cm}
-    \small ¿Preguntas?
+	\titlepage
 \end{frame}
 
 \end{document}
