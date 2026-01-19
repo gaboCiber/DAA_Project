@@ -51,6 +51,52 @@
     \end{block}
 \end{frame}
 
+\begin{frame}{Ejemplo Ilustrativo}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Freelancers Disponibles:}
+            \begin{itemize}
+                \item $f_1$: Costo 50
+                \begin{itemize}
+                    \item Frontend: 4
+                    \item Database: 2
+                \end{itemize}
+                \item $f_2$: Costo 40
+                \begin{itemize}
+                    \item Database: 4
+                    \item UX/UI: 3
+                \end{itemize}
+                \item $f_3$: Costo 60
+                \begin{itemize}
+                    \item Frontend: 5
+                    \item UX/UI: 5
+                \end{itemize}
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \textbf{Requisitos del Proyecto:}
+            \begin{itemize}
+                \item Frontend $\geq$ 4
+                \item Database $\geq$ 3
+                \item UX/UI $\geq$ 4
+            \end{itemize}
+            \vspace{0.5cm}
+            \textbf{Soluciones Posibles:}
+            \begin{itemize}
+                \item $\{f_1, f_2, f_3\}$: Costo 150
+                \item $\{f_2, f_3\}$: Costo 100 \checkmark
+                \item $\{f_1, f_3\}$: Costo 110 $\times$
+                \item $\{f_1, f_2\}$: Costo 90 $\times$
+            \end{itemize}
+        \end{column}
+    \end{columns}
+    \vspace{0.3cm}
+    \begin{alertblock}{Solución Óptima}
+        $\{f_2, f_3\}$ con costo total de 100, cubriendo todos los requisitos al mínimo costo.
+    \end{alertblock}
+\end{frame}
+
+
 % 4. Análisis de Complejidad
 \begin{frame}{Análisis de Complejidad}
     \begin{itemize}
